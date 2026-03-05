@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% block title %}Roles{% endblock %}{% block page_title %}Roles & Permissions{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Roles & Permissions</h1></div><a href="{{ url_for('admin_role_add') }}" class="btn btn-primary">+ New Role</a></div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Role Name</th><th>Description</th><th>Staff Count</th><th>Actions</th></tr></thead>
+<tbody>{% for r in roles %}<tr>
+  <td><span class="badge badge-purple" style="font-size:.85rem;padding:.3rem .75rem;">{{ r.name }}</span></td>
+  <td>{{ r.description or '—' }}</td>
+  <td>{{ r.staff_count }} users</td>
+  <td>
+    <a href="{{ url_for('admin_role_permissions',rid=r.id) }}" class="btn btn-primary btn-xs">🔐 Permissions</a>
+    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary btn-xs">👥 Users</a>
+  </td>
+</tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

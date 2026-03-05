@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block title %}My Leave{% endblock %}
+{% block page_title %}My Leave Applications{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>📋 Leave Management</h1><div class="breadcrumb">My Portal / Leave</div></div>
+  <a href="{{ url_for('my_portal') }}" class="btn btn-secondary">← My Portal</a>
+</div>
+
+<!-- Leave Balance Cards -->
+<div class="stats-grid" style="margin-bottom:1.25rem;">
+  {% for lt in leave_types %}
+  {% set bal = balances.get(lt.id, {}) %}
+  <div class="stat-card" style="--card-color:{% if bal.remaining==0 %}#c62828{% elif bal.remaining <= 3 %}#e65100{% else %}#2e7d32{% endif %};">
+    <div class="stat-label">{{ lt.name }}</div>
+    <div class="stat-value">{{ bal.remaining }}</div>
+    <div class="stat-sub">{{ bal.used }} used of {{ bal.allowed }} days</div>
+    <div style="margin-top:.35rem;height:5px;background:#e0e0e0;border-radius:3px;overflow:hidden;">
+      <div style="height:100%;background:{% if bal.remaining==0 %}#c62828{% elif bal.remaining<=3 %}#e65100{% else %}#2e7d32{% endif %};width:{{ [(bal.used/bal.allowed*100) if bal.allowed > 0 else 0, 100]|min }}%;transition:.3s;"></div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="grid-2" style="align-items:start;">
+  <!-- Application Form -->
+  <div class="card">
+    <div class="card-header"><h3>➕ Apply for Leave</h3></div>
+    <div class="card-body">
+      <form method="POST" id="leaveForm">
+        <div class="form-group mb-3">
+          <label class="form-label">Leave Type *</label>
+          <select name="leave_type_id" class="form-control" required id="leaveTypeSelect" onchange="updateBalance(this)">
+            <option value="">— Select leave type —</option>
+            {% for lt in leave_types %}
+            <option value="{{ lt.id }}" data-remaining="{{ balances.get(lt.id,{}).get('remaining',0) }}">
+              {{ lt.name }} ({{ balances.get(lt.id,{}).get('remaining',0) }} days left)
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div id="balanceAlert" style="display:none;" class="alert alert-danger" style="font-size:.8rem;"></div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">From Date *</label>
+            <input type="date" name="from_date" class="form-control" required
+              min="{{ today }}" id="fromDate" onchange="calcDays()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">To Date *</label>
+            <input type="date" name="to_date" class="form-control" required
+              min="{{ today }}" id="toDate" onchange="calcDays()">
+          </div>
+        </div>
+
+        <div id="daysPreview" style="display:none;background:#fff8f0;border:1.5px solid #ffcc80;border-radius:.5rem;padding:.75rem;margin:.75rem 0;text-align:center;">
+          <div style="font-size:.75rem;color:var(--muted);">Duration</div>
+          <div id="daysCount" style="font-size:1.75rem;font-weight:800;color:var(--brand-orange);"></div>
+          <div style="font-size:.72rem;color:var(--muted);">working day(s)</div>
+        </div>
+
+        <div class="form-group" style="margin-top:.75rem;">
+          <label class="form-label">Reason for Leave *</label>
+          <textarea name="reason" class="form-control" rows="3"
+            placeholder="Please describe the reason for your leave request..." required></textarea>
+        </div>
+
+        <div class="mt-3">
+          <button type="submit" class="btn btn-primary" style="width:100%;padding:.65rem;">
+            📤 Submit Leave Application
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- My Leave History -->
+  <div class="card">
+    <div class="card-header"><h3>📜 My Leave History</h3></div>
+    <div class="card-body p-0">
+      <table>
+        <thead><tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for l in my_leaves %}
+          <tr>
+            <td><strong>{{ l.leave_name }}</strong></td>
+            <td>{{ l.from_date }}</td>
+            <td>{{ l.to_date }}</td>
+            <td>{{ l.total_days }}</td>
+            <td>
+              {% if l.status=='approved' %}
+                <span class="badge badge-success">✓ Approved</span>
+              {% elif l.status=='rejected' %}
+                <span class="badge badge-danger">✗ Rejected</span>
+              {% elif l.status=='cancelled' %}
+                <span class="badge badge-secondary">Cancelled</span>
+              {% else %}
+                <span class="badge badge-warning">⏳ Pending</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if l.status=='pending' %}
+              <form method="POST" action="{{ url_for('my_leave_cancel',lid=l.id) }}"
+                onsubmit="return confirm('Cancel this leave application?')">
+                <button class="btn btn-danger btn-xs">✕ Cancel</button>
+              </form>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-center text-muted" style="padding:2rem;">
+            No leave applications yet.<br>
+            <small>Use the form on the left to apply for your first leave.</small>
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const balances = {{ balances | tojson }};
+function updateBalance(sel){
+  const opt = sel.selectedOptions[0];
+  const remaining = parseInt(opt.dataset.remaining || 0);
+  const alert = document.getElementById('balanceAlert');
+  if(opt.value && remaining === 0){
+    alert.style.display='block';
+    alert.textContent = 'You have no remaining balance for this leave type.';
+  } else if(opt.value && remaining <= 2){
+    alert.style.display='block';
+    alert.style.background='#fff8e1';alert.style.color='#e65100';alert.style.borderColor='#ffa726';
+    alert.textContent = `Only ${remaining} day(s) remaining for this leave type.`;
+  } else { alert.style.display='none'; }
+}
+function calcDays(){
+  const from = document.getElementById('fromDate').value;
+  const to   = document.getElementById('toDate').value;
+  const preview = document.getElementById('daysPreview');
+  if(from && to){
+    const d = (new Date(to) - new Date(from)) / 86400000 + 1;
+    if(d > 0){
+      document.getElementById('daysCount').textContent = d;
+      preview.style.display='block';
+    } else { preview.style.display='none'; }
+  }
+}
+</script>
+{% endblock %}

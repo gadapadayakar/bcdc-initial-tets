@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% block title %}Beds{% endblock %}{% block page_title %}Bed Management{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Bed Management</h1></div>{% if user_perms.get('beds',{}).get('add') %}<a href="{{ url_for('beds_add') }}" class="btn btn-primary">+ Add Bed</a>{% endif %}</div>
+<div class="stats-grid">
+  {% set total = beds|length %}{% set occupied = beds|selectattr('patient_name')|list|length %}
+  <div class="stat-card" style="--card-color:#10b981;"><div class="stat-label">Available</div><div class="stat-value">{{ total-occupied }}</div></div>
+  <div class="stat-card" style="--card-color:#ef4444;"><div class="stat-label">Occupied</div><div class="stat-value">{{ occupied }}</div></div>
+  <div class="stat-card" style="--card-color:#2563eb;"><div class="stat-label">Total Beds</div><div class="stat-value">{{ total }}</div></div>
+</div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Bed</th><th>Type</th><th>Ward/Group</th><th>Floor</th><th>Rate/Day</th><th>Status</th><th>Patient</th><th>Doctor</th><th>Admitted</th></tr></thead>
+<tbody>{% for b in beds %}<tr>
+  <td><strong>{{ b.name }}</strong></td><td>{{ b.type_name or "—" }}</td><td>{{ b.group_name or "—" }}</td><td>{{ b.floor_name or "—" }}</td>
+  <td>{{ b.charge_per_day }}</td>
+  <td>{% if b.patient_name %}<span class="badge badge-danger"><span class="dot dot-red"></span>Occupied</span>{% else %}<span class="badge badge-success"><span class="dot dot-green"></span>Available</span>{% endif %}</td>
+  <td>{{ b.patient_name or "—" }}</td><td>{{ b.doctor_name or "—" }}</td><td>{{ b.admission_date or "—" }}</td>
+</tr>{% else %}<tr><td colspan="9" class="text-center text-muted" style="padding:2rem">No beds found.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

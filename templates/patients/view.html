@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}{{ patient.patient_name }}{% endblock %}
+{% block page_title %}Patient Profile{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>{{ patient.patient_name }}</h1><div class="breadcrumb"><a href="{{ url_for('patients') }}">Patients</a> / {{ patient.patient_unique_id }}</div></div>
+  <div class="flex gap-2">
+    {% if user_perms.get('patients',{}).get('edit') %}<a href="{{ url_for('patient_edit',pid=patient.id) }}" class="btn btn-warning">Edit</a>{% endif %}
+    <a href="{{ url_for('patients') }}" class="btn btn-secondary">← Back</a>
+  </div>
+</div>
+<div class="grid-2">
+<div class="card">
+  <div class="card-header"><h3>Personal Information</h3></div>
+  <div class="card-body">
+    <table style="width:100%;font-size:.85rem;">
+      {% for label,val in [('Patient ID',patient.patient_unique_id),('Name',patient.patient_name),('Guardian',patient.guardian_name),('Gender',patient.gender),('DOB',patient.dob),('Age',patient.age),('Blood Group',patient.blood_group),('Mobile',patient.mobileno),('Email',patient.email),('Address',patient.address),('Type',patient.patient_type|upper),('Notes',patient.note)] %}
+      <tr><td style="padding:.4rem 0;color:var(--muted);width:40%;font-size:.78rem;font-weight:600;text-transform:uppercase;">{{ label }}</td><td>{{ val or '—' }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+<div>
+  <div class="card">
+    <div class="card-header"><h3>OPD Records</h3>{% if user_perms.get('opd',{}).get('add') %}<a href="{{ url_for('opd_add') }}" class="btn btn-primary btn-sm">+ OPD</a>{% endif %}</div>
+    <div class="card-body p-0"><table><thead><tr><th>Date</th><th>Doctor</th><th>Charge</th><th>Payment</th></tr></thead>
+    <tbody>{% for r in opd_records %}<tr><td>{{ r.date }}</td><td>{{ r.doctor_name or "—" }}</td><td>{{ r.charge }}</td>
+    <td>{% if r.payment_status=='paid' %}<span class="badge badge-success">Paid</span>{% else %}<span class="badge badge-danger">Unpaid</span>{% endif %}</td>
+    </tr>{% else %}<tr><td colspan="4" class="text-center text-muted" style="padding:1rem">None</td></tr>{% endfor %}</tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>IPD Admissions</h3>{% if user_perms.get('ipd',{}).get('add') %}<a href="{{ url_for('ipd_add') }}" class="btn btn-primary btn-sm">+ Admit</a>{% endif %}</div>
+    <div class="card-body p-0"><table><thead><tr><th>Date</th><th>Bed</th><th>Doctor</th><th>Status</th></tr></thead>
+    <tbody>{% for r in ipd_records %}<tr><td>{{ r.date }}</td><td>{{ r.bed_name or "—" }}</td><td>{{ r.doctor_name or "—" }}</td>
+    <td>{% if r.discharged=='no' %}<span class="badge badge-warning">Admitted</span>{% else %}<span class="badge badge-secondary">Discharged</span>{% endif %}</td>
+    </tr>{% else %}<tr><td colspan="4" class="text-center text-muted" style="padding:1rem">None</td></tr>{% endfor %}</tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>Lab Reports</h3>{% if user_perms.get('lab',{}).get('add') %}<a href="{{ url_for('lab_add') }}" class="btn btn-primary btn-sm">+ Test</a>{% endif %}</div>
+    <div class="card-body p-0"><table><thead><tr><th>Test</th><th>Date</th><th>Result</th><th>Status</th></tr></thead>
+    <tbody>{% for r in lab_records %}<tr><td>{{ r.test_name }}</td><td>{{ r.test_date }}</td><td>{{ r.result or "—" }}</td>
+    <td>{% if r.status=='completed' %}<span class="badge badge-success">Done</span>{% else %}<span class="badge badge-warning">Pending</span>{% endif %}</td>
+    </tr>{% else %}<tr><td colspan="4" class="text-center text-muted" style="padding:1rem">None</td></tr>{% endfor %}</tbody></table></div>
+  </div>
+</div>
+</div>
+{% endblock %}

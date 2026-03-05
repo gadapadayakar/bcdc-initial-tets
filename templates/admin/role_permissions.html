@@ -1,0 +1,42 @@
+{% extends 'base.html' %}{% block title %}Edit Permissions{% endblock %}{% block page_title %}Edit Role Permissions{% endblock %}{% block content %}
+<div class="page-header">
+  <div><h1>Permissions: <span class="badge badge-purple" style="font-size:.9rem;">{{ role.name }}</span></h1><div class="breadcrumb">Admin / Roles / {{ role.name }}</div></div>
+  <a href="{{ url_for('admin_roles') }}" class="btn btn-secondary">← Back</a>
+</div>
+<div class="card"><div class="card-body">
+<form method="POST">
+  <div class="alert alert-info">💡 Super Admin role always has full access regardless of settings here.</div>
+  <div class="table-wrap"><table class="perm-table">
+    <thead>
+      <tr style="background:#f8fafc;">
+        <th style="min-width:200px;padding:.75rem;">Module</th>
+        <th style="text-align:center;">👁 View</th>
+        <th style="text-align:center;">➕ Add</th>
+        <th style="text-align:center;">✏ Edit</th>
+        <th style="text-align:center;">🗑 Delete</th>
+        <th style="text-align:center;">All</th>
+      </tr>
+    </thead>
+    <tbody>{% for mod in modules %}
+    {% set p = perms.get(mod, {}) %}
+    <tr style="{% if loop.index % 2 == 0 %}background:#fafafa{% endif %}">
+      <td><strong class="module-label">{{ mod.replace('hr_','HR: ').replace('_',' ').title() }}</strong></td>
+      {% for action in ['view','add','edit','delete'] %}
+      <td style="text-align:center;"><input type="checkbox" class="perm-check mod-{{ mod }}" name="{{ mod }}_{{ action }}" value="1" {% if p.get(action) %}checked{% endif %}></td>
+      {% endfor %}
+      <td style="text-align:center;">
+        <input type="checkbox" title="Toggle all for {{ mod }}" onchange="toggleRow('{{ mod }}',this.checked)" {% if p.get('view') and p.get('add') and p.get('edit') and p.get('delete') %}checked{% endif %}>
+      </td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  <div class="mt-3 flex gap-2">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="setAll(true)">✓ Select All</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="setAll(false)">✗ Clear All</button>
+  </div>
+  <div class="mt-4 flex gap-2"><button type="submit" class="btn btn-primary">💾 Save Permissions</button><a href="{{ url_for('admin_roles') }}" class="btn btn-secondary">Cancel</a></div>
+</form>
+</div></div>{% endblock %}
+{% block extra_js %}<script>
+function toggleRow(mod, v){document.querySelectorAll('.mod-'+mod).forEach(c=>c.checked=v);}
+function setAll(v){document.querySelectorAll('.perm-check').forEach(c=>c.checked=v);}
+</script>{% endblock %}

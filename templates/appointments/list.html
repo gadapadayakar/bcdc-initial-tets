@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Appointments{% endblock %}
+{% block page_title %}Appointments{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Appointments</h1><div class="breadcrumb">Home / Appointments</div></div>
+  <div class="flex gap-2">
+    <form method="GET" class="flex gap-2 items-center">
+      <input type="date" name="date" class="form-control" value="{{ date_filter }}" style="width:160px;">
+      <button type="submit" class="btn btn-secondary">Filter</button>
+    </form>
+    {% if user_perms.get('appointments',{}).get('add') %}<a href="{{ url_for('appointment_add') }}" class="btn btn-primary">+ Book Appointment</a>{% endif %}
+  </div>
+</div>
+<div class="card">
+  <div class="card-body p-0">
+  <div class="table-wrap"><table>
+    <thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Dept</th><th>Type</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for r in records %}<tr>
+      <td><strong>{{ r.appointment_time }}</strong></td>
+      <td>{{ r.patient_name }}<br><small class="text-muted">{{ r.patient_unique_id }}</small></td>
+      <td>{{ r.doctor_name or "—" }} {{ r.doctor_sur or "" }}</td>
+      <td>{{ r.department_name or "—" }}</td>
+      <td><span class="badge badge-info">{{ r.type|upper }}</span></td>
+      <td>{% if r.priority=='urgent' %}<span class="badge badge-danger">Urgent</span>{% elif r.priority=='high' %}<span class="badge badge-warning">High</span>{% else %}<span class="badge badge-secondary">Normal</span>{% endif %}</td>
+      <td>{% if r.status=='scheduled' %}<span class="badge badge-primary">Scheduled</span>{% elif r.status=='completed' %}<span class="badge badge-success">Completed</span>{% elif r.status=='cancelled' %}<span class="badge badge-danger">Cancelled</span>{% else %}<span class="badge badge-secondary">{{ r.status }}</span>{% endif %}</td>
+      <td>
+        {% if r.status=='scheduled' %}
+        <form method="POST" action="{{ url_for('appointment_status', aid=r.id) }}" style="display:inline">
+          <input type="hidden" name="status" value="completed">
+          <button class="btn btn-success btn-xs">✓ Done</button>
+        </form>
+        <form method="POST" action="{{ url_for('appointment_status', aid=r.id) }}" style="display:inline">
+          <input type="hidden" name="status" value="cancelled">
+          <button class="btn btn-danger btn-xs">✗ Cancel</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>{% else %}<tr><td colspan="8" class="text-center text-muted" style="padding:2rem">No appointments for this date.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  </div>
+</div>
+{% endblock %}

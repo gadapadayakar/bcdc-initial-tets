@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% block title %}Log Trip{% endblock %}{% block page_title %}Log Vehicle Trip{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Log Vehicle Trip</h1></div><a href="{{ url_for('vehicle_list') }}" class="btn btn-secondary">← Back</a></div>
+<div class="card"><div class="card-body"><form method="POST">
+  <div class="form-grid">
+    <div class="form-group"><label class="form-label">Vehicle *</label>
+      <select name="vehicle_id" class="form-control" required><option value="">Select…</option>{% for v in vehicles %}<option value="{{ v.id }}">{{ v.vehicle_name }} ({{ v.vehicle_number }})</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label">Patient</label>
+      <select name="patient_id" class="form-control"><option value="0">External / Walk-in</option>{% for p in patients %}<option value="{{ p.id }}">{{ p.patient_name }} ({{ p.patient_unique_id }})</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label">Trip Date</label><input type="date" name="trip_date" class="form-control" value="{{ today }}"></div>
+    <div class="form-group"><label class="form-label">Pickup Location</label><input type="text" name="pickup_location" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Drop Location</label><input type="text" name="drop_location" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Distance (KM)</label><input type="number" name="distance_km" class="form-control" step="0.1" value="0"></div>
+    <div class="form-group"><label class="form-label">Charge</label><input type="number" name="charge" class="form-control" step="0.01" value="0"></div>
+  </div>
+  <div class="form-group mt-3"><label class="form-label">Note</label><textarea name="note" class="form-control" rows="2"></textarea></div>
+  <div class="mt-4 flex gap-2"><button type="submit" class="btn btn-primary">Log Trip</button><a href="{{ url_for('vehicle_list') }}" class="btn btn-secondary">Cancel</a></div>
+</form></div></div>{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% block title %}Insurance/TPA{% endblock %}{% block page_title %}Insurance & TPA{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Insurance / TPA Management</h1></div>{% if user_perms.get('insurance',{}).get('add') %}<a href="{{ url_for('insurance_add') }}" class="btn btn-primary">+ Add TPA</a>{% endif %}</div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Organisation</th><th>Contact Person</th><th>Email</th><th>Phone</th><th>Coverage Limit</th><th>Status</th><th>Actions</th></tr></thead>
+<tbody>{% for t in tpa_list %}<tr>
+  <td><strong>{{ t.organisation_name }}</strong></td><td>{{ t.contact_person or '—' }}</td>
+  <td>{{ t.email or '—' }}</td><td>{{ t.phone or '—' }}</td>
+  <td>{{ current_user.currency_symbol }}{{ "%.0f"|format(t.coverage_limit) if t.coverage_limit else '—' }}</td>
+  <td>{% if t.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Inactive</span>{% endif %}</td>
+  <td>{% if user_perms.get('insurance',{}).get('edit') %}
+    <form method="POST" action="{{ url_for('insurance_toggle',tid=t.id) }}" style="display:inline">
+      <button class="btn btn-{{ 'danger' if t.is_active else 'success' }} btn-xs">{{ 'Deactivate' if t.is_active else 'Activate' }}</button>
+    </form>{% endif %}
+  </td>
+</tr>{% else %}<tr><td colspan="7" class="text-center text-muted" style="padding:2rem">No TPA/Insurance added.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

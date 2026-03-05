@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Attendance Report{% endblock %}
+{% block page_title %}Monthly Attendance Report{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Attendance Report</h1></div><a href="{{ url_for('hr_attendance') }}" class="btn btn-secondary">Back</a></div>
+<div class="card mb-3"><div class="card-body">
+  <form method="GET" class="flex gap-2 items-center">
+    <label class="form-label" style="margin:0;">Month:</label>
+    <input type="month" name="month" class="form-control" value="{{ month }}" style="width:180px;">
+    <button type="submit" class="btn btn-primary">Generate</button>
+  </form>
+</div></div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Emp ID</th><th>Name</th><th>Present</th><th>Absent</th><th>Late</th><th>Half Day</th><th>Total</th><th>%</th></tr></thead>
+<tbody>{% for r in records %}
+{% set pct = (r.present_days/r.total_marked*100) if r.total_marked > 0 else 0 %}
+<tr>
+  <td>{{ r.employee_id }}</td><td>{{ r.name }} {{ r.surname }}</td>
+  <td><span class="badge badge-success">{{ r.present_days }}</span></td>
+  <td><span class="badge badge-danger">{{ r.absent_days }}</span></td>
+  <td><span class="badge badge-warning">{{ r.late_days }}</span></td>
+  <td><span class="badge badge-secondary">{{ r.half_days }}</span></td>
+  <td>{{ r.total_marked }}</td>
+  <td style="font-weight:700;color:{% if pct>=90 %}#10b981{% elif pct>=70 %}#f59e0b{% else %}#ef4444{% endif %}">{{ "%.1f"|format(pct) }}%</td>
+</tr>{% else %}<tr><td colspan="8" class="text-center text-muted" style="padding:2rem">No attendance data for {{ month }}.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>
+{% endblock %}

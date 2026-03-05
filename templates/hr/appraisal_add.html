@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}New Appraisal{% endblock %}
+{% block page_title %}New Performance Appraisal{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>⭐ New Appraisal</h1><div class="breadcrumb">HR / Appraisals / New</div></div>
+  <a href="{{ url_for('hr_appraisal') }}" class="btn btn-secondary">← Back</a>
+</div>
+<div class="card" style="max-width:900px;">
+  <div class="card-header"><h3>Appraisal Form</h3></div>
+  <div class="card-body">
+    <form method="POST">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Staff Member *</label>
+          <select name="staff_id" class="form-control" required>
+            <option value="">— Select Staff —</option>
+            {% for s in staff %}
+            <option value="{{ s.id }}">{{ s.employee_id }} — {{ s.name }} {{ s.surname }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Appraisal Period *</label>
+          <input type="text" name="period" class="form-control" placeholder="e.g. Q1 2025, Annual 2025" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select name="status" class="form-control">
+            <option value="draft">Draft</option>
+            <option value="final">Final</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-section">Performance Scores (0 – 100)</div>
+      <div class="form-grid">
+        {% for label, fname in [('Punctuality & Attendance','punctuality'),('Teamwork & Collaboration','teamwork'),('Technical Skills','technical_skills'),('Communication Skills','communication'),('Patient Care Quality','patient_care')] %}
+        <div class="form-group">
+          <label class="form-label">{{ label }}</label>
+          <input type="number" name="{{ fname }}" class="form-control" min="0" max="100" 
+            value="80" required oninput="calcOverall()">
+        </div>
+        {% endfor %}
+        <div class="form-group">
+          <label class="form-label">Overall Score (auto)</label>
+          <input type="text" id="overallDisplay" class="form-control" readonly
+            style="background:#fff8f0;font-weight:700;font-size:1.1rem;color:var(--brand-orange);">
+        </div>
+      </div>
+
+      <div class="form-section">Detailed Feedback</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Strengths Observed</label>
+          <textarea name="strengths" class="form-control" rows="2" placeholder="Key strengths and achievements..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Areas for Improvement</label>
+          <textarea name="improvements" class="form-control" rows="2" placeholder="Areas that need improvement..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Goals for Next Period</label>
+          <textarea name="goals" class="form-control" rows="2" placeholder="Goals to achieve next period..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reviewer Comments</label>
+          <textarea name="reviewer_comments" class="form-control" rows="2" placeholder="Additional comments from reviewer..."></textarea>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">💾 Save Appraisal</button>
+        <a href="{{ url_for('hr_appraisal') }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function calcOverall(){
+  const fields = ['punctuality','teamwork','technical_skills','communication','patient_care'];
+  let total=0, count=0;
+  fields.forEach(f => {
+    const v = parseInt(document.querySelector('[name="'+f+'"]').value||0);
+    total += v; count++;
+  });
+  const avg = (total/count).toFixed(1);
+  const grade = avg>=90?'A+':avg>=80?'A':avg>=70?'B':avg>=60?'C':'D';
+  document.getElementById('overallDisplay').value = avg + '/100 — Grade: ' + grade;
+}
+document.addEventListener('DOMContentLoaded', calcOverall);
+</script>
+{% endblock %}

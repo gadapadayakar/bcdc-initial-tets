@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Prescription #{{ rx.id }}{% endblock %}
+{% block page_title %}Prescription #{{ rx.id }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Prescription #{{ rx.id }}</h1>
+    <div class="breadcrumb">Pharmacy / Prescriptions / #{{ rx.id }}</div>
+  </div>
+  <div class="flex gap-2">
+    {% if rx.status == 'pending' and perms.get('pharmacy_dispense',{}).get('add') %}
+    <a href="{{ url_for('pharmacy_dispense') }}?rx={{ rx.id }}" class="btn btn-success">💊 Dispense This Rx</a>
+    {% endif %}
+    <a href="{{ url_for('pharmacy_list') }}" class="btn btn-secondary">← Back</a>
+    <button onclick="window.print()" class="btn btn-secondary">🖨 Print</button>
+  </div>
+</div>
+
+<div class="grid-2" style="align-items:start;">
+  <div class="card">
+    <div class="card-header"><h3>Patient Details</h3></div>
+    <div class="card-body">
+      <table style="width:100%;font-size:.85rem;">
+        <tr><td style="color:var(--muted);width:40%;font-size:.72rem;font-weight:600;text-transform:uppercase;padding:.35rem 0;">Patient</td><td><strong>{{ rx.patient_name }}</strong></td></tr>
+        <tr><td style="color:var(--muted);font-size:.72rem;font-weight:600;text-transform:uppercase;padding:.35rem 0;">Patient ID</td><td><span class="badge badge-info">{{ rx.patient_unique_id }}</span></td></tr>
+        <tr><td style="color:var(--muted);font-size:.72rem;font-weight:600;text-transform:uppercase;padding:.35rem 0;">Age/Gender</td><td>{{ rx.age or '—' }} / {{ rx.gender or '—' }}</td></tr>
+        <tr><td style="color:var(--muted);font-size:.72rem;font-weight:600;text-transform:uppercase;padding:.35rem 0;">Blood Group</td><td>{{ rx.blood_group or '—' }}</td></tr>
+        <tr><td style="color:var(--muted);font-size:.72rem;font-weight:600;text-transform:uppercase;padding:.35rem 0;">Mobile</td><td>{{ rx.mobileno or '—' }}</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>Prescription Info</h3></div>
+    <div class="card-body">
+      <table style="width:100%;font-size:.85rem;">
+        <tr><td style="color:var(--muted);width:40%;font-size:.72rem;font-weight:600;text-transform:uppercase;padding:.35rem 0;">Doctor</td><td><strong>Dr. {{ rx.doc }} {{ rx.doc_sur }}</strong></td></tr>
+        <tr><td style="color:var(--muted);font-size:.72rem;font-weight:600;text-transform:uppercase;padding:.35rem 0;">Date</td><td>{{ rx.prescribed_date }}</td></tr>
+        <tr><td style="color:var(--muted);font-size:.72rem;font-weight:600;text-transform:uppercase;padding:.35rem 0;">Diagnosis</td><td>{{ rx.diagnosis or '—' }}</td></tr>
+        <tr><td style="color:var(--muted);font-size:.72rem;font-weight:600;text-transform:uppercase;padding:.35rem 0;">Notes</td><td>{{ rx.note or '—' }}</td></tr>
+        <tr><td style="color:var(--muted);font-size:.72rem;font-weight:600;text-transform:uppercase;padding:.35rem 0;">Status</td>
+        <td>{% if rx.status=='dispensed' %}<span class="badge badge-success">✅ Dispensed</span>
+            {% else %}<span class="badge badge-warning">⏳ Pending</span>{% endif %}</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h3>Prescribed Medicines</h3></div>
+  <div class="card-body p-0">
+  <table>
+    <thead>
+      <tr><th>#</th><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Qty</th><th>Instructions</th></tr>
+    </thead>
+    <tbody>
+    {% for it in items %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td><strong>{{ it.medicine_name }}</strong>{% if it.unit %} <span style="color:var(--muted);font-size:.75rem;">({{ it.unit }})</span>{% endif %}</td>
+      <td>{{ it.dosage or '—' }}</td>
+      <td>{{ it.frequency or '—' }}</td>
+      <td>{{ it.duration or '—' }}</td>
+      <td><strong>{{ it.quantity }}</strong></td>
+      <td>{{ it.instructions or '—' }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="text-center text-muted" style="padding:1rem">No items.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+{% if dispenses %}
+<div class="card">
+  <div class="card-header"><h3>Dispense History</h3></div>
+  <div class="card-body p-0">
+  <table>
+    <thead><tr><th>Date</th><th>Dispensed By</th><th>Total</th><th>Payment</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for d in dispenses %}
+    <tr>
+      <td>{{ d.dispense_date }}</td>
+      <td>{{ d.disp_by }}</td>
+      <td><strong>{{ cu.currency }}{{ '%.2f'|format(d.total_amount) }}</strong></td>
+      <td>{% if d.payment_status=='paid' %}<span class="badge badge-success">Paid</span>{% else %}<span class="badge badge-warning">Pending</span>{% endif %}</td>
+      <td><a href="{{ url_for('pharmacy_dispense_all') }}" class="btn btn-info btn-xs">View Bill</a></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

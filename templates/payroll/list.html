@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Payroll{% endblock %}
+{% block page_title %}Payroll{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Payroll</h1></div>{% if user_perms.get('payroll',{}).get('add') %}<a href="{{ url_for('payroll_add') }}" class="btn btn-primary">+ Add Payroll</a>{% endif %}</div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Emp ID</th><th>Name</th><th>Month</th><th>Year</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net</th><th>Status</th><th>Actions</th></tr></thead>
+<tbody>{% for r in records %}<tr>
+  <td>{{ r.employee_id }}</td>
+  <td>{{ r.name }} {{ r.surname }}</td>
+  <td>{{ r.month }}</td><td>{{ r.year }}</td>
+  <td>{{ "%.2f"|format(r.basic_salary) }}</td>
+  <td>{{ "%.2f"|format(r.allowances) }}</td>
+  <td>{{ "%.2f"|format(r.deductions) }}</td>
+  <td><strong>{{ "%.2f"|format(r.net_salary) }}</strong></td>
+  <td>{% if r.payment_status=='paid' %}<span class="badge badge-success">Paid</span>{% else %}<span class="badge badge-danger">Unpaid</span>{% endif %}</td>
+  <td>{% if r.payment_status=='unpaid' and user_perms.get('payroll',{}).get('edit') %}
+    <form method="POST" action="{{ url_for('payroll_mark_paid', pid=r.id) }}" style="display:inline">
+      <button class="btn btn-success btn-xs">Mark Paid</button>
+    </form>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="10" class="text-center text-muted" style="padding:2rem">No payroll records.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>
+{% endblock %}

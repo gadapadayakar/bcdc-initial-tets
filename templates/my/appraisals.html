@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}My Appraisals{% endblock %}
+{% block page_title %}My Performance Appraisals{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>⭐ My Performance Appraisals</h1><div class="breadcrumb">My Portal / Appraisals</div></div>
+  <a href="{{ url_for('my_portal') }}" class="btn btn-secondary">← My Portal</a>
+</div>
+{% for r in records %}
+<div class="card">
+  <div class="card-header">
+    <div style="display:flex;align-items:center;gap:.75rem;">
+      <h3>{{ r.period }}</h3>
+      <span class="score-box score-{{ 'a' if r.grade in ['A+','A'] else 'b' if r.grade=='B' else 'c' if r.grade=='C' else 'd' }}" style="font-size:.9rem;padding:.3rem .75rem;">
+        Grade: {{ r.grade }}
+      </span>
+      <span style="font-size:.8rem;color:var(--muted);">Overall: {{ r.overall_score }}/100</span>
+    </div>
+    {% if r.status=='final' %}<span class="badge badge-success">Final</span>
+    {% else %}<span class="badge badge-secondary">Draft</span>{% endif %}
+  </div>
+  <div class="card-body">
+    <div class="grid-4" style="margin-bottom:1rem;">
+      {% for label,val in [('Punctuality',r.punctuality),('Teamwork',r.teamwork),('Technical Skills',r.technical_skills),('Communication',r.communication),('Patient Care',r.patient_care)] %}
+      <div style="text-align:center;padding:.75rem;background:#fffaf5;border-radius:.5rem;border:1px solid var(--sidebar-border);">
+        <div style="font-size:.68rem;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:.25rem;">{{ label }}</div>
+        <div style="font-size:1.4rem;font-weight:800;color:var(--brand-orange);">{{ val }}</div>
+        <div style="font-size:.65rem;color:var(--muted);">out of 100</div>
+        <div style="height:4px;background:#e0e0e0;border-radius:2px;margin-top:.35rem;overflow:hidden;">
+          <div style="height:100%;width:{{ val }}%;background:{% if val>=80 %}#2e7d32{% elif val>=60 %}#e65100{% else %}#c62828{% endif %};"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% if r.strengths %}<p><strong>Strengths:</strong> {{ r.strengths }}</p>{% endif %}
+    {% if r.improvements %}<p><strong>Areas for Improvement:</strong> {{ r.improvements }}</p>{% endif %}
+    {% if r.goals %}<p><strong>Goals:</strong> {{ r.goals }}</p>{% endif %}
+    {% if r.reviewer_comments %}<p><strong>Reviewer Comments:</strong> {{ r.reviewer_comments }}</p>{% endif %}
+    <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem;">
+      Reviewed by: {{ r.reviewer_name or 'HR Manager' }} &nbsp;|&nbsp; Date: {{ r.review_date or '—' }}
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="card-body text-center text-muted" style="padding:3rem;">
+  <div style="font-size:3rem;margin-bottom:1rem;">⭐</div>
+  <div style="font-size:.9rem;">No appraisal records found.</div>
+  <div style="font-size:.8rem;margin-top:.5rem;">Contact HR for your performance review.</div>
+</div></div>
+{% endfor %}
+{% endblock %}

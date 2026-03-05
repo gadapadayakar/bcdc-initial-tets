@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Add OPD{% endblock %}
+{% block page_title %}Add OPD Visit{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>🩺 New OPD Visit</h1><div class="breadcrumb">OPD / New Visit</div></div>
+  <a href="{{ url_for('opd') }}" class="btn btn-secondary">← Back to OPD</a>
+</div>
+<div class="card" style="max-width:900px;">
+  <div class="card-header"><h3>Patient Visit Details</h3></div>
+  <div class="card-body">
+    <form method="POST">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Patient *</label>
+          <select name="patient_id" class="form-control" required>
+            <option value="">— Select Patient —</option>
+            {% for p in patients %}
+            <option value="{{ p.id }}">{{ p.patient_unique_id }} — {{ p.patient_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Doctor *</label>
+          <select name="doctor_id" class="form-control" required>
+            <option value="">— Select Doctor —</option>
+            {% for d in doctors %}
+            <option value="{{ d.id }}">Dr. {{ d.name }} {{ d.surname }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Visit Date *</label>
+          <input type="date" name="date" class="form-control" value="{{ today }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Consultation Charge (₹)</label>
+          <input type="number" name="charge" class="form-control" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Payment Status</label>
+          <select name="payment_status" class="form-control">
+            <option value="unpaid">Unpaid / Credit</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Insurance / TPA</label>
+          <select name="tpa_id" class="form-control">
+            <option value="">None</option>
+            {% for t in tpa_list %}
+            <option value="{{ t.id }}">{{ t.organisation_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Follow-up Date</label>
+          <input type="date" name="follow_up_date" class="form-control">
+        </div>
+      </div>
+      <div class="form-group mt-3">
+        <label class="form-label">Symptoms / Chief Complaint *</label>
+        <textarea name="symptoms" class="form-control" rows="2" placeholder="Patient's presenting symptoms..." required></textarea>
+      </div>
+      <div class="form-group mt-2">
+        <label class="form-label">Diagnosis</label>
+        <textarea name="diagnosis" class="form-control" rows="2" placeholder="Doctor's diagnosis..."></textarea>
+      </div>
+      <div class="form-group mt-2">
+        <label class="form-label">Notes / Prescription Instructions</label>
+        <textarea name="note" class="form-control" rows="2" placeholder="Additional notes, instructions..."></textarea>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">💾 Save OPD Visit</button>
+        <a href="{{ url_for('opd') }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

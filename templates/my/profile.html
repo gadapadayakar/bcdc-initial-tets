@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>👤 My Profile</h1><div class="breadcrumb">My Portal / Profile</div></div>
+  <a href="{{ url_for('my_portal') }}" class="btn btn-secondary">← My Portal</a>
+</div>
+
+<div class="grid-2" style="align-items:start;">
+  <!-- Profile Info (Read Only) -->
+  <div class="card">
+    <div class="card-header"><h3>🪪 Employee Information</h3>
+      <span class="badge badge-secondary">Read Only — Contact HR to update</span>
+    </div>
+    <div class="card-body">
+      <div style="text-align:center;margin-bottom:1.25rem;">
+        <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--brand-orange),var(--brand-orange-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.75rem;font-weight:800;margin:0 auto .75rem;">
+          {{ me.name[:1].upper() }}
+        </div>
+        <div style="font-size:1.15rem;font-weight:700;">{{ me.name }} {{ me.surname }}</div>
+        <div style="font-size:.82rem;color:var(--muted);">{{ me.employee_id }}</div>
+        <span class="badge badge-orange" style="margin-top:.35rem;">{{ me.role_name }}</span>
+      </div>
+      <table style="width:100%;font-size:.82rem;">
+        <tr><td style="color:var(--muted);padding:.3rem 0;width:45%;">Department</td><td><strong>{{ me.department_name or '—' }}</strong></td></tr>
+        <tr><td style="color:var(--muted);padding:.3rem 0;">Designation</td><td><strong>{{ me.designation_name or '—' }}</strong></td></tr>
+        <tr><td style="color:var(--muted);padding:.3rem 0;">Date of Joining</td><td><strong>{{ me.date_of_joining or '—' }}</strong></td></tr>
+        <tr><td style="color:var(--muted);padding:.3rem 0;">Email</td><td><strong>{{ me.email }}</strong></td></tr>
+        <tr><td style="color:var(--muted);padding:.3rem 0;">Date of Birth</td><td><strong>{{ me.dob or '—' }}</strong></td></tr>
+        <tr><td style="color:var(--muted);padding:.3rem 0;">Blood Group</td><td><strong>{{ me.blood_group or '—' }}</strong></td></tr>
+        <tr><td style="color:var(--muted);padding:.3rem 0;">Gender</td><td><strong>{{ me.gender or '—' }}</strong></td></tr>
+        <tr><td style="color:var(--muted);padding:.3rem 0;">Qualification</td><td><strong>{{ me.qualification or '—' }}</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Editable Fields -->
+  <div>
+    <div class="card">
+      <div class="card-header"><h3>✏️ Update Contact Details</h3></div>
+      <div class="card-body">
+        <form method="POST">
+          <input type="hidden" name="action" value="profile">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="text" name="phone" class="form-control" value="{{ me.phone or '' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mobile Number</label>
+              <input type="text" name="mobileno" class="form-control" value="{{ me.mobileno or '' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Blood Group</label>
+              <select name="blood_group" class="form-control">
+                <option value="">— Select —</option>
+                {% for bg in ['A+','A-','B+','B-','AB+','AB-','O+','O-'] %}
+                <option value="{{ bg }}" {% if me.blood_group==bg %}selected{% endif %}>{{ bg }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Emergency Contact</label>
+              <input type="text" name="emergency_contact" class="form-control" value="{{ me.emergency_contact or '' }}" placeholder="Name — Phone">
+            </div>
+          </div>
+          <div class="form-group mt-3">
+            <label class="form-label">Residential Address</label>
+            <textarea name="address" class="form-control" rows="2">{{ me.address or '' }}</textarea>
+          </div>
+          <button type="submit" class="btn btn-primary mt-3" style="width:100%;">💾 Save Contact Details</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h3>🔒 Change Password</h3></div>
+      <div class="card-body">
+        <form method="POST">
+          <div class="form-group mb-3">
+            <label class="form-label">Current Password *</label>
+            <input type="password" name="current_password" class="form-control" placeholder="Enter your current password" required>
+          </div>
+          <div class="form-group mb-3">
+            <label class="form-label">New Password *</label>
+            <input type="password" name="new_password" class="form-control" id="newpw"
+              placeholder="Minimum 6 characters" required minlength="6" oninput="checkStrength(this.value)">
+            <div id="strength" style="height:4px;border-radius:2px;margin-top:.35rem;transition:.3s;background:#e0e0e0;"></div>
+            <div id="strengthLabel" style="font-size:.68rem;color:var(--muted);margin-top:.2rem;"></div>
+          </div>
+          <div class="form-group mb-3">
+            <label class="form-label">Confirm New Password *</label>
+            <input type="password" name="confirm_password" class="form-control" placeholder="Repeat new password" required oninput="checkMatch()">
+            <div id="matchLabel" style="font-size:.68rem;margin-top:.2rem;"></div>
+          </div>
+          <button type="submit" class="btn btn-success" style="width:100%;">🔐 Change Password</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function checkStrength(pw){
+  const bar = document.getElementById('strength');
+  const lbl = document.getElementById('strengthLabel');
+  if(pw.length < 4){ bar.style.width='20%'; bar.style.background='#c62828'; lbl.textContent='Weak'; lbl.style.color='#c62828'; }
+  else if(pw.length < 8 || !/[A-Z]/.test(pw) || !/[0-9]/.test(pw)){ bar.style.width='55%'; bar.style.background='#e65100'; lbl.textContent='Fair'; lbl.style.color='#e65100'; }
+  else { bar.style.width='100%'; bar.style.background='#2e7d32'; lbl.textContent='Strong'; lbl.style.color='#2e7d32'; }
+}
+function checkMatch(){
+  const pw = document.getElementById('newpw').value;
+  const inp = event.target;
+  const lbl = document.getElementById('matchLabel');
+  if(inp.value === pw){ lbl.textContent='✓ Passwords match'; lbl.style.color='#2e7d32'; }
+  else { lbl.textContent='✗ Passwords do not match'; lbl.style.color='#c62828'; }
+}
+</script>
+{% endblock %}

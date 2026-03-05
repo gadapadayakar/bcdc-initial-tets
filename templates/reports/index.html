@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% block title %}Reports{% endblock %}{% block page_title %}Reports{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Reports & Analytics</h1></div></div>
+<div class="grid-4">
+  {% for title,icon,url,desc,color in [
+    ('Financial Report','💰',url_for('report_financial'),'P&L, income vs expense, category breakdown','#10b981'),
+    ('Patient Report','🏥',url_for('report_patients'),'OPD & IPD visit statistics','#2563eb'),
+    ('HR Report','👥',url_for('report_hr'),'Payroll, attendance & leave summary','#8b5cf6'),
+    ('Pharmacy Report','💊',url_for('report_pharmacy'),'Medicine dispense, revenue, top drugs','#10b981')
+  ] %}
+  <a href="{{ url }}" style="text-decoration:none;">
+    <div class="stat-card" style="--card-color:{{ color }};padding:1.75rem;cursor:pointer;">
+      <div style="font-size:2.5rem;margin-bottom:.75rem;">{{ icon }}</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">{{ title }}</div>
+      <div style="font-size:.8rem;color:var(--muted);">{{ desc }}</div>
+    </div>
+  </a>{% endfor %}
+</div>{% endblock %}

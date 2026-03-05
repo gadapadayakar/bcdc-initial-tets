@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Add Lab Test{% endblock %}
+{% block page_title %}New Lab Test{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>🔬 Order Lab Test</h1><div class="breadcrumb">Laboratory / New Test</div></div>
+  <a href="{{ url_for('lab') }}" class="btn btn-secondary">← Back to Lab</a>
+</div>
+<div class="card" style="max-width:700px;">
+  <div class="card-header"><h3>Test Details</h3></div>
+  <div class="card-body">
+    <form method="POST">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Patient *</label>
+          <select name="patient_id" class="form-control" required>
+            <option value="">— Select Patient —</option>
+            {% for p in patients %}
+            <option value="{{ p.id }}">{{ p.patient_unique_id }} — {{ p.patient_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Referring Doctor</label>
+          <select name="doctor_id" class="form-control">
+            <option value="">— Select Doctor —</option>
+            {% for d in doctors %}
+            <option value="{{ d.id }}">Dr. {{ d.name }} {{ d.surname }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Test Name *</label>
+          <input type="text" name="test_name" class="form-control" 
+            placeholder="e.g. CBC, Blood Glucose, Urine Analysis" required list="test_suggestions">
+          <datalist id="test_suggestions">
+            <option value="CBC (Complete Blood Count)">
+            <option value="Blood Glucose - Fasting">
+            <option value="Blood Glucose - Random">
+            <option value="HbA1c">
+            <option value="Liver Function Test (LFT)">
+            <option value="Kidney Function Test (KFT)">
+            <option value="Lipid Profile">
+            <option value="Thyroid Profile (T3/T4/TSH)">
+            <option value="Urine Analysis">
+            <option value="Urine Culture">
+            <option value="Blood Culture">
+            <option value="X-Ray Chest">
+            <option value="ECG">
+            <option value="2D Echo">
+            <option value="Ultrasound Abdomen">
+            <option value="MRI Brain">
+          </datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Test Date *</label>
+          <input type="date" name="test_date" class="form-control" value="{{ today }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Normal Range</label>
+          <input type="text" name="normal_range" class="form-control" placeholder="e.g. 70-110">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit</label>
+          <input type="text" name="unit" class="form-control" placeholder="e.g. mg/dL, g/dL">
+        </div>
+      </div>
+      <div class="form-group mt-3">
+        <label class="form-label">Notes / Special Instructions</label>
+        <textarea name="note" class="form-control" rows="2" placeholder="Any special notes for lab technician..."></textarea>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">🔬 Order Test</button>
+        <a href="{{ url_for('lab') }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

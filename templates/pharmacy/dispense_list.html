@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Dispense Records{% endblock %}
+{% block page_title %}💊 Medicine Dispense Records{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Dispense Records</h1><div class="breadcrumb">Pharmacy / Dispense History</div></div>
+  <div class="flex gap-2">
+    {% if perms.get('pharmacy_dispense',{}).get('add') %}
+    <a href="{{ url_for('pharmacy_dispense') }}" class="btn btn-success">+ New Dispense</a>
+    {% endif %}
+    <a href="{{ url_for('pharmacy_list') }}" class="btn btn-secondary">📋 Prescriptions</a>
+  </div>
+</div>
+<div class="card">
+  <div class="card-body p-0">
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Patient</th><th>Patient ID</th><th>Rx#</th>
+        <th>Date</th><th>Dispensed By</th><th>Total</th><th>Payment</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in records %}
+    <tr>
+      <td><strong>#{{ r.id }}</strong></td>
+      <td>{{ r.patient_name }}</td>
+      <td><span class="badge badge-info">{{ r.patient_unique_id }}</span></td>
+      <td>{% if r.prescription_id %}<span class="badge badge-purple">#{{ r.prescription_id }}</span>{% else %}—{% endif %}</td>
+      <td>{{ r.dispense_date }}</td>
+      <td>{{ r.disp_by }}</td>
+      <td><strong>{{ cu.currency }}{{ '%.2f'|format(r.total_amount) }}</strong></td>
+      <td>
+        {% if r.payment_status == 'paid' %}
+          <span class="badge badge-success">Paid</span>
+        {% else %}
+          <span class="badge badge-warning">Pending</span>
+        {% endif %}
+      </td>
+      <td><a href="{{ url_for('pharmacy_dispense_all') }}" class="btn btn-info btn-xs">View Bill</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="9" class="text-center text-muted" style="padding:2rem">No dispense records found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  </div>
+</div>
+{% endblock %}

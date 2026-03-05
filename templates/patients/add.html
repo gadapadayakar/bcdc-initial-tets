@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Add Patient{% endblock %}
+{% block page_title %}Add Patient{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Add New Patient</h1></div><a href="{{ url_for('patients') }}" class="btn btn-secondary">← Back</a></div>
+<div class="card"><div class="card-body">
+<form method="POST">
+  <div class="form-section">Personal Information</div>
+  <div class="form-grid">
+    <div class="form-group"><label class="form-label">Patient Name *</label><input type="text" name="patient_name" class="form-control" required></div>
+    <div class="form-group"><label class="form-label">Guardian / Parent</label><input type="text" name="guardian_name" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Gender</label>
+      <select name="gender" class="form-control"><option value="">Select…</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+    <div class="form-group"><label class="form-label">Date of Birth</label><input type="date" name="dob" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Age</label><input type="number" name="age" class="form-control" min="0"></div>
+    <div class="form-group"><label class="form-label">Blood Group</label>
+      <select name="blood_group" class="form-control"><option value="">Select…</option>{% for bg in ['A+','A-','B+','B-','AB+','AB-','O+','O-'] %}<option>{{ bg }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label">Mobile Number</label><input type="text" name="mobile" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Patient Type</label>
+      <select name="patient_type" class="form-control"><option value="opd">OPD</option><option value="ipd">IPD</option></select></div>
+  </div>
+  <div class="form-group mt-3"><label class="form-label">Address</label><textarea name="address" class="form-control"></textarea></div>
+  <div class="form-group mt-2"><label class="form-label">Notes</label><textarea name="notes" class="form-control" rows="2"></textarea></div>
+  <div class="mt-4 flex gap-2"><button type="submit" class="btn btn-primary">Save Patient</button><a href="{{ url_for('patients') }}" class="btn btn-secondary">Cancel</a></div>
+</form>
+</div></div>
+{% endblock %}

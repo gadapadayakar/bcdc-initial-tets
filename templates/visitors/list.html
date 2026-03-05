@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block title %}Visitors{% endblock %}{% block page_title %}Visitor Log{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Visitor Log</h1></div>{% if user_perms.get('visitors',{}).get('add') %}<a href="{{ url_for('visitor_add') }}" class="btn btn-primary">+ Register Visitor</a>{% endif %}</div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Visitor Name</th><th>Patient</th><th>Purpose</th><th>Date</th><th>Time</th><th>Note</th></tr></thead>
+<tbody>{% for v in visitors %}<tr>
+  <td>{{ v.visitor_name }}</td><td>{{ v.patient_name or 'N/A' }}</td><td>{{ v.purpose or '—' }}</td>
+  <td>{{ v.visit_date }}</td><td>{{ v.visit_time or '—' }}</td><td>{{ (v.note or '')[:40] }}</td>
+</tr>{% else %}<tr><td colspan="6" class="text-center text-muted" style="padding:2rem">No visitors today.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

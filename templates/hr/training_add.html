@@ -1,0 +1,24 @@
+{% extends 'base.html' %}{% block title %}New Training{% endblock %}{% block page_title %}Create Training Program{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Create Training Program</h1></div><a href="{{ url_for('hr_training') }}" class="btn btn-secondary">← Back</a></div>
+<div class="card"><div class="card-body"><form method="POST">
+  <div class="form-section">Program Details</div>
+  <div class="form-grid">
+    <div class="form-group"><label class="form-label">Training Title *</label><input type="text" name="title" class="form-control" required></div>
+    <div class="form-group"><label class="form-label">Category</label>
+      <select name="category" class="form-control">{% for c in categories %}<option>{{ c }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label">Trainer / Instructor</label><input type="text" name="trainer" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Start Date</label><input type="date" name="start_date" class="form-control" value="{{ today }}"></div>
+    <div class="form-group"><label class="form-label">End Date</label><input type="date" name="end_date" class="form-control" value="{{ today }}"></div>
+    <div class="form-group"><label class="form-label">Duration (Hours)</label><input type="number" name="duration_hours" class="form-control" value="8"></div>
+    <div class="form-group"><label class="form-label">Location</label><input type="text" name="location" class="form-control"></div>
+  </div>
+  <div class="form-group mt-2"><label class="form-label">Description</label><textarea name="description" class="form-control"></textarea></div>
+  <div class="form-section">Enroll Staff</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.5rem;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:.5rem;padding:.75rem;">
+    {% for s in staff %}
+    <label style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;cursor:pointer;">
+      <input type="checkbox" name="participants" value="{{ s.id }}">{{ s.name }} {{ s.surname }} ({{ s.employee_id }})
+    </label>{% endfor %}
+  </div>
+  <div class="mt-4 flex gap-2"><button type="submit" class="btn btn-primary">Create Program</button><a href="{{ url_for('hr_training') }}" class="btn btn-secondary">Cancel</a></div>
+</form></div></div>{% endblock %}

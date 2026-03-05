@@ -1,0 +1,22 @@
+{% extends 'base.html' %}{% block title %}Settings{% endblock %}{% block page_title %}Hospital Settings{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Hospital Settings</h1></div></div>
+<div class="card"><div class="card-body"><form method="POST">
+  <div class="form-section">Hospital Information</div>
+  <div class="form-grid">
+    <div class="form-group"><label class="form-label">Hospital Name</label><input type="text" name="name" class="form-control" value="{{ settings.get('name','') }}"></div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" class="form-control" value="{{ settings.get('email','') }}"></div>
+    <div class="form-group"><label class="form-label">Phone</label><input type="text" name="phone" class="form-control" value="{{ settings.get('phone','') }}"></div>
+    <div class="form-group"><label class="form-label">Currency</label><input type="text" name="currency" class="form-control" value="{{ settings.get('currency','USD') }}"></div>
+    <div class="form-group"><label class="form-label">Currency Symbol</label><input type="text" name="currency_symbol" class="form-control" value="{{ settings.get('currency_symbol','$') }}" style="width:80px;"></div>
+    <div class="form-group"><label class="form-label">Timezone</label>
+      <select name="timezone" class="form-control">{% for tz in ['UTC','Asia/Kolkata','Asia/Dubai','US/Eastern','US/Pacific','Europe/London','Europe/Berlin'] %}<option {% if settings.get('timezone')==tz %}selected{% endif %}>{{ tz }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label">Date Format</label>
+      <select name="date_format" class="form-control">{% for df in ['d-m-Y','m-d-Y','Y-m-d'] %}<option {% if settings.get('date_format')==df %}selected{% endif %}>{{ df }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label">Time Format</label>
+      <select name="time_format" class="form-control"><option value="12" {% if settings.get('time_format')=='12' %}selected{% endif %}>12 Hour</option><option value="24" {% if settings.get('time_format')=='24' %}selected{% endif %}>24 Hour</option></select></div>
+    <div class="form-group"><label class="form-label">Theme</label>
+      <select name="theme" class="form-control">{% for th in ['default','dark','blue','green'] %}<option {% if settings.get('theme')==th %}selected{% endif %}>{{ th }}</option>{% endfor %}</select></div>
+  </div>
+  <div class="form-group mt-3"><label class="form-label">Address</label><textarea name="address" class="form-control">{{ settings.get('address','') }}</textarea></div>
+  <div class="mt-4"><button type="submit" class="btn btn-primary">Save Settings</button></div>
+</form></div></div>{% endblock %}

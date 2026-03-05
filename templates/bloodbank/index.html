@@ -1,0 +1,38 @@
+{% extends 'base.html' %}{% block title %}Blood Bank{% endblock %}{% block page_title %}Blood Bank{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Blood Bank</h1></div>
+  <div class="flex gap-2">
+    {% if user_perms.get('bloodbank',{}).get('add') %}<a href="{{ url_for('bloodbank_donate') }}" class="btn btn-success">+ Add Donation</a>
+    <a href="{{ url_for('bloodbank_request') }}" class="btn btn-primary">+ Blood Request</a>{% endif %}
+  </div>
+</div>
+<div class="form-section">Blood Inventory</div>
+<div class="stats-grid">
+  {% for inv in inventory %}
+  <div class="stat-card" style="--card-color:{% if inv.units_available>10 %}#10b981{% elif inv.units_available>0 %}#f59e0b{% else %}#ef4444{% endif %};">
+    <div class="stat-label">{{ inv.blood_group }}</div>
+    <div class="stat-value">{{ inv.units_available }}</div>
+    <div class="stat-sub">Units Available</div>
+    <div class="stat-icon">🩸</div>
+  </div>{% endfor %}
+</div>
+<div class="grid-2">
+<div class="card"><div class="card-header"><h3>Recent Donations</h3></div><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Donor</th><th>Blood Group</th><th>Date</th><th>Units</th><th>Expiry</th><th>Status</th></tr></thead>
+<tbody>{% for d in donations %}<tr>
+  <td>{{ d.donor_name }}</td><td><span class="badge badge-danger">{{ d.blood_group }}</span></td>
+  <td>{{ d.donation_date }}</td><td>{{ d.units_donated }}</td><td>{{ d.expiry_date or '—' }}</td>
+  <td>{% if d.status=='available' %}<span class="badge badge-success">Available</span>{% else %}<span class="badge badge-secondary">Used</span>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="6" class="text-center text-muted" style="padding:1.5rem">No donations.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>
+
+<div class="card"><div class="card-header"><h3>Blood Requests</h3></div><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Patient</th><th>Blood</th><th>Units</th><th>Required By</th><th>Status</th><th>Action</th></tr></thead>
+<tbody>{% for r in requests %}<tr>
+  <td>{{ r.patient_name or 'External' }}</td><td><span class="badge badge-danger">{{ r.blood_group }}</span></td>
+  <td>{{ r.units_required }}</td><td>{{ r.required_date or '—' }}</td>
+  <td>{% if r.status=='approved' %}<span class="badge badge-success">Approved</span>{% elif r.status=='rejected' %}<span class="badge badge-danger">Rejected</span>{% else %}<span class="badge badge-warning">Pending</span>{% endif %}</td>
+  <td>{% if r.status=='pending' and user_perms.get('bloodbank',{}).get('edit') %}
+    <form method="POST" action="{{ url_for('bloodbank_approve',rid=r.id) }}" style="display:inline"><button class="btn btn-success btn-xs">Approve</button></form>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="6" class="text-center text-muted" style="padding:1.5rem">No requests.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>
+</div>{% endblock %}

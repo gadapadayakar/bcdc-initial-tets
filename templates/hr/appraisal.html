@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% block title %}Appraisals{% endblock %}{% block page_title %}Performance Appraisals{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Performance Appraisals</h1></div>{% if user_perms.get('hr_appraisal',{}).get('add') %}<a href="{{ url_for('hr_appraisal_add') }}" class="btn btn-primary">+ New Appraisal</a>{% endif %}</div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Staff</th><th>Period</th><th>Reviewer</th><th>Punctuality</th><th>Teamwork</th><th>Technical</th><th>Comm.</th><th>Patient Care</th><th>Overall</th><th>Grade</th><th>Status</th></tr></thead>
+<tbody>{% for r in records %}<tr>
+  <td>{{ r.name }} {{ r.surname }}</td><td>{{ r.period }}</td><td>{{ r.reviewer_name or '—' }}</td>
+  <td>{{ r.punctuality }}/100</td><td>{{ r.teamwork }}/100</td><td>{{ r.technical_skills }}/100</td><td>{{ r.communication }}/100</td><td>{{ r.patient_care }}/100</td>
+  <td><strong>{{ "%.1f"|format(r.overall_score) }}</strong></td>
+  <td><span class="score-box {% if r.grade in ['A+','A'] %}score-a{% elif r.grade=='B' %}score-b{% elif r.grade=='C' %}score-c{% else %}score-d{% endif %}">{{ r.grade }}</span></td>
+  <td>{% if r.status=='final' %}<span class="badge badge-success">Final</span>{% else %}<span class="badge badge-warning">Draft</span>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="11" class="text-center text-muted" style="padding:2rem">No appraisals found.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

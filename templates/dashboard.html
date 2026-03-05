@@ -1,0 +1,78 @@
+{% extends 'base.html' %}{% block title %}Dashboard{% endblock %}{% block page_title %}Dashboard{% endblock %}{% block content %}
+<div class="stats-grid">
+  <div class="stat-card" style="--card-color:#2563eb;"><div class="stat-label">Total Patients</div><div class="stat-value">{{ stats.total_patients }}</div><div class="stat-icon">🏥</div></div>
+  <div class="stat-card" style="--card-color:#10b981;"><div class="stat-label">OPD Today</div><div class="stat-value">{{ stats.opd_today }}</div><div class="stat-icon">🩺</div></div>
+  <div class="stat-card" style="--card-color:#8b5cf6;"><div class="stat-label">IPD Current</div><div class="stat-value">{{ stats.ipd_current }}</div><div class="stat-icon">🛏</div></div>
+  <div class="stat-card" style="--card-color:#06b6d4;"><div class="stat-label">Beds Available</div><div class="stat-value">{{ stats.beds_available }}</div><div class="stat-icon">🛏</div></div>
+  <div class="stat-card" style="--card-color:#f59e0b;"><div class="stat-label">Staff Active</div><div class="stat-value">{{ stats.staff_active }}</div><div class="stat-icon">👨‍⚕️</div></div>
+  <div class="stat-card" style="--card-color:#ef4444;"><div class="stat-label">Appts Today</div><div class="stat-value">{{ stats.appointments_today }}</div><div class="stat-icon">📅</div></div>
+  <div class="stat-card" style="--card-color:#10b981;"><div class="stat-label">Today Income</div><div class="stat-value">{{ current_user.currency_symbol }}{{ "%.0f"|format(stats.total_income) }}</div><div class="stat-icon">📈</div></div>
+  <div class="stat-card" style="--card-color:#ef4444;"><div class="stat-label">Today Expense</div><div class="stat-value">{{ current_user.currency_symbol }}{{ "%.0f"|format(stats.total_expense) }}</div><div class="stat-icon">📉</div></div>
+  <div class="stat-card" style="--card-color:#ec4899;"><div class="stat-label">Pending Leave</div><div class="stat-value">{{ stats.pending_leaves }}</div><div class="stat-icon">📆</div></div>
+  <div class="stat-card" style="--card-color:#ef4444;"><div class="stat-label">Blood Units</div><div class="stat-value">{{ stats.blood_units }}</div><div class="stat-icon">🩸</div></div>
+  <div class="stat-card" style="--card-color:#f59e0b;"><div class="stat-label">Pending Lab</div><div class="stat-value">{{ stats.pending_lab }}</div><div class="stat-icon">🔬</div></div>
+  <div class="stat-card" style="--card-color:#22c55e;"><div class="stat-label">Dispensed Today</div><div class="stat-value">{{ stats.dispense_today }}</div><div class="stat-icon">💊</div></div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><h3>📅 Today's Appointments</h3><a href="{{ url_for('appointments') }}" class="btn btn-secondary btn-xs">View All</a></div>
+    <div class="card-body p-0"><table>
+      <thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Type</th><th>Priority</th><th>Action</th></tr></thead>
+      <tbody>{% for a in appointments_today %}<tr>
+        <td style="font-weight:600;">{{ a.appointment_time }}</td>
+        <td>{{ a.patient_name }}</td><td>{{ a.doctor_name }}</td>
+        <td><span class="badge badge-info">{{ a.type }}</span></td>
+        <td><span class="badge badge-{{ 'danger' if a.priority=='urgent' else 'warning' if a.priority=='high' else 'secondary' }}">{{ a.priority|title }}</span></td>
+        <td><form method="POST" action="{{ url_for('appointment_status',aid=a.id) }}" style="display:inline">
+          <input type="hidden" name="status" value="completed">
+          <button class="btn btn-success btn-xs">Done</button></form></td>
+      </tr>{% else %}<tr><td colspan="6" class="text-center text-muted" style="padding:1rem;">No appointments today</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>⏳ Pending Leave Approvals</h3><a href="{{ url_for('hr_leave') }}" class="btn btn-secondary btn-xs">All Leaves</a></div>
+    <div class="card-body p-0"><table>
+      <thead><tr><th>Employee</th><th>Type</th><th>Days</th><th>Actions</th></tr></thead>
+      <tbody>{% for l in pending_leaves %}<tr>
+        <td>{{ l.name }} {{ l.surname }}<br><small class="text-muted">{{ l.employee_id }}</small></td>
+        <td>{{ l.leave_name }}</td><td>{{ l.total_days }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('hr_leave_approve',lid=l.id) }}" style="display:inline"><input type="hidden" name="status" value="approved"><button class="btn btn-success btn-xs">✓</button></form>
+          <form method="POST" action="{{ url_for('hr_leave_approve',lid=l.id) }}" style="display:inline"><input type="hidden" name="status" value="rejected"><button class="btn btn-danger btn-xs">✗</button></form>
+        </td>
+      </tr>{% else %}<tr><td colspan="4" class="text-center text-muted" style="padding:1rem">No pending leaves</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><h3>📊 7-Day Income vs Expense</h3></div>
+    <div class="card-body"><canvas id="chart" height="200"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>⚠️ Medicine Expiry Alerts</h3><a href="{{ url_for('pharmacy_list') }}" class="btn btn-secondary btn-xs">Pharmacy</a></div>
+    <div class="card-body p-0"><table>
+      <thead><tr><th>Medicine</th><th>Expiry</th><th>Qty</th></tr></thead>
+      <tbody>{% for m in expiry_alerts %}<tr>
+        <td>{{ m.medicine_name }}</td>
+        <td style="color:var(--danger);font-weight:700;">{{ m.expiry_date }}</td>
+        <td>{{ m.available_quantity }}</td>
+      </tr>{% else %}<tr><td colspan="3" class="text-center text-muted" style="padding:1rem">No expiring medicines 🎉</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+fetch('/api/chart').then(r=>r.json()).then(d=>{
+  new Chart(document.getElementById('chart'),{
+    type:'bar',data:{labels:d.labels,
+      datasets:[{label:'Income',data:d.income,backgroundColor:'rgba(16,185,129,.7)',borderRadius:4},
+                {label:'Expense',data:d.expense,backgroundColor:'rgba(239,68,68,.7)',borderRadius:4}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}
+  });
+});
+</script>{% endblock %}

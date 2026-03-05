@@ -1,0 +1,13 @@
+{% extends 'base.html' %}{% block title %}OPD{% endblock %}{% block page_title %}OPD Records{% endblock %}{% block content %}
+<div class="page-header"><div><h1>OPD Records</h1></div>{% if user_perms.get('opd',{}).get('add') %}<a href="{{ url_for('opd_add') }}" class="btn btn-primary">+ Add OPD</a>{% endif %}</div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Patient</th><th>Doctor</th><th>Date</th><th>Symptoms</th><th>Charge</th><th>Payment</th><th>TPA</th><th>Follow-up</th></tr></thead>
+<tbody>{% for r in records %}<tr>
+  <td>{{ r.patient_name }}<br><small class="text-muted">{{ r.patient_unique_id }}</small></td>
+  <td>{{ r.doctor_name or "—" }}</td><td>{{ r.date }}</td>
+  <td>{{ (r.symptoms or '')[:40] }}{% if r.symptoms and r.symptoms|length>40 %}…{% endif %}</td>
+  <td>{{ r.charge }}</td>
+  <td>{% if r.payment_status=='paid' %}<span class="badge badge-success">Paid</span>{% else %}<span class="badge badge-danger">Unpaid</span>{% endif %}</td>
+  <td>{{ r.tpa_name if r.tpa_name else "—" }}</td><td>{{ r.follow_up or "—" }}</td>
+</tr>{% else %}<tr><td colspan="8" class="text-center text-muted" style="padding:2rem">No OPD records.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

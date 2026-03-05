@@ -1,0 +1,35 @@
+{% extends 'base.html' %}{% block title %}Vehicle/Ambulance{% endblock %}{% block page_title %}Ambulance & Vehicle{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Ambulance & Vehicle</h1></div>
+  <div class="flex gap-2">
+    {% if user_perms.get('vehicle',{}).get('add') %}
+    <a href="{{ url_for('vehicle_trip') }}" class="btn btn-success">+ Log Trip</a>
+    <a href="{{ url_for('vehicle_add') }}" class="btn btn-primary">+ Add Vehicle</a>{% endif %}
+  </div>
+</div>
+<div class="grid-4" style="margin-bottom:1.25rem;">
+  {% set avail = vehicles|selectattr('status','equalto','available')|list|length %}
+  <div class="stat-card" style="--card-color:#10b981;"><div class="stat-label">Available</div><div class="stat-value">{{ avail }}</div></div>
+  <div class="stat-card" style="--card-color:#ef4444;"><div class="stat-label">On Trip</div><div class="stat-value">{{ vehicles|length - avail }}</div></div>
+  <div class="stat-card" style="--card-color:#2563eb;"><div class="stat-label">Total Vehicles</div><div class="stat-value">{{ vehicles|length }}</div></div>
+  <div class="stat-card" style="--card-color:#8b5cf6;"><div class="stat-label">Trips Logged</div><div class="stat-value">{{ trips|length }}</div></div>
+</div>
+<div class="grid-2">
+<div class="card"><div class="card-header"><h3>Fleet</h3></div><div class="card-body p-0"><table>
+<thead><tr><th>Vehicle</th><th>Number</th><th>Type</th><th>Driver</th><th>Contact</th><th>Status</th></tr></thead>
+<tbody>{% for v in vehicles %}<tr>
+  <td><strong>{{ v.vehicle_name }}</strong></td><td>{{ v.vehicle_number }}</td>
+  <td><span class="badge badge-info">{{ v.vehicle_type|capitalize }}</span></td>
+  <td>{{ v.driver_name }}</td><td>{{ v.driver_phone }}</td>
+  <td>{% if v.status=='available' %}<span class="badge badge-success"><span class="dot dot-green"></span>Available</span>{% else %}<span class="badge badge-warning">On Trip</span>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="6" class="text-center text-muted" style="padding:1.5rem">No vehicles.</td></tr>{% endfor %}</tbody>
+</table></div></div>
+
+<div class="card"><div class="card-header"><h3>Recent Trips</h3></div><div class="card-body p-0"><table>
+<thead><tr><th>Vehicle</th><th>Patient</th><th>Date</th><th>From → To</th><th>KM</th><th>Charge</th></tr></thead>
+<tbody>{% for t in trips %}<tr>
+  <td>{{ t.vehicle_name }}</td><td>{{ t.patient_name or 'Walk-in' }}</td><td>{{ t.trip_date }}</td>
+  <td>{{ t.pickup_location or '—' }} → {{ t.drop_location or '—' }}</td>
+  <td>{{ t.distance_km }}</td><td>{{ current_user.currency_symbol }}{{ t.charge }}</td>
+</tr>{% else %}<tr><td colspan="6" class="text-center text-muted" style="padding:1.5rem">No trips.</td></tr>{% endfor %}</tbody>
+</table></div></div>
+</div>{% endblock %}

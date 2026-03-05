@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% block title %}Dispense Medicines{% endblock %}
+{% block page_title %}💊 Dispense Medicines to Patient{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Dispense Medicines</h1><div class="breadcrumb">Pharmacy / Dispense / New</div></div>
+  <a href="{{ url_for('pharmacy_dispense_all') }}" class="btn btn-secondary">← Back</a>
+</div>
+
+{% if rx %}
+<div class="alert alert-info">
+  📋 Dispensing against <strong>Prescription #{{ rx.id }}</strong> — Patient: <strong>{{ rx.patient_name }}</strong> ({{ rx.patient_unique_id }})
+</div>
+{% endif %}
+
+<form method="POST" id="dispenseForm">
+  <input type="hidden" name="prescription_id" value="{{ rx.id if rx else 0 }}">
+  <input type="hidden" name="total_amount" id="grandTotal" value="0">
+
+  <div class="grid-2" style="align-items:start;">
+    <div class="card">
+      <div class="card-header"><h3>Patient Information</h3></div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Select Patient *</label>
+          <select name="patient_id" class="form-control" required {% if rx %}disabled{% endif %}>
+            <option value="">-- Search patient --</option>
+            {% for p in patients %}
+            <option value="{{ p.id }}" {% if rx and rx.patient_id==p.id %}selected{% endif %}>
+              {{ p.patient_name }} — {{ p.patient_unique_id }} ({{ p.mobileno or 'No phone' }})
+            </option>
+            {% endfor %}
+          </select>
+          {% if rx %}<input type="hidden" name="patient_id" value="{{ rx.patient_id }}">{% endif %}
+        </div>
+        <div class="form-grid mt-3">
+          <div class="form-group">
+            <label class="form-label">Dispense Date</label>
+            <input type="date" name="date" class="form-control" value="{{ today }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Payment Status</label>
+            <select name="payment_status" class="form-control">
+              <option value="paid">Paid</option>
+              <option value="unpaid">Pending / Credit</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group mt-3">
+          <label class="form-label">Note</label>
+          <textarea name="note" class="form-control" rows="2" placeholder="Optional notes..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    {% if pending_rx and not rx %}
+    <div class="card">
+      <div class="card-header"><h3>Pending Prescriptions</h3></div>
+      <div class="card-body p-0" style="max-height:220px;overflow-y:auto;">
+      <table>
+        <thead><tr><th>Rx#</th><th>Patient</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody>
+        {% for pr in pending_rx %}
+        <tr>
+          <td><span class="badge badge-warning">#{{ pr.id }}</span></td>
+          <td>{{ pr.patient_name }}</td>
+          <td>{{ pr.prescribed_date }}</td>
+          <td><a href="{{ url_for('pharmacy_dispense') }}?rx={{ pr.id }}" class="btn btn-success btn-xs">Load Rx</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="card">
+      <div class="card-header"><h3>Add Medicine from Inventory</h3></div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Search & Select Medicine</label>
+          <select id="medSelector" class="form-control" onchange="addFromSelector(this)">
+            <option value="">-- Select medicine to add --</option>
+            {% for m in medicines %}
+            <option value="{{ m.id }}" data-name="{{ m.medicine_name }}" data-stock="{{ m.stock }}">
+              {{ m.medicine_name }} (Stock: {{ m.stock }} {{ m.unit }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem;">
+          Select a medicine above to add it to the dispense bill
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>Medicines to Dispense</h3>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="addMedRow()">+ Add Row</button>
+    </div>
+    <div class="card-body p-0">
+    <div class="table-wrap">
+    <table id="dispTable">
+      <thead>
+        <tr>
+          <th style="min-width:200px;">Medicine *</th>
+          <th style="min-width:150px;">Batch (Stock)</th>
+          <th style="min-width:80px;">Qty *</th>
+          <th style="min-width:90px;">Sale Price</th>
+          <th style="min-width:90px;">Total</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="dispItems">
+        {% if rx_items %}
+          {% for it in rx_items %}
+          <tr id="dr_{{ loop.index }}">
+            <td>
+              <input type="hidden" name="med_id[]" value="{{ it.medicine_id }}">
+              <div style="font-size:.85rem;font-weight:600;">{{ it.medicine_name }}</div>
+              <div style="font-size:.72rem;color:var(--muted);">{{ it.dosage }} | {{ it.frequency }} | {{ it.duration }}</div>
+              <div style="font-size:.72rem;color:#2563eb;">Prescribed qty: {{ it.quantity }}</div>
+            </td>
+            <td>
+              <select name="batch_id[]" class="form-control" onchange="updatePrice(this,{{ loop.index }})">
+                <option value="0">No specific batch</option>
+              </select>
+              <div id="stock_{{ loop.index }}" style="font-size:.7rem;color:var(--muted);margin-top:.25rem;"></div>
+            </td>
+            <td><input type="number" name="qty[]" id="qty_{{ loop.index }}" class="form-control" value="{{ it.quantity }}" min="1" oninput="calcRow({{ loop.index }})"></td>
+            <td><input type="number" name="price[]" id="price_{{ loop.index }}" class="form-control" step="0.01" value="0" oninput="calcRow({{ loop.index }})"></td>
+            <td><strong id="total_{{ loop.index }}" style="color:#10b981;">0.00</strong></td>
+            <td><button type="button" class="btn btn-danger btn-xs" onclick="document.getElementById('dr_{{ loop.index }}').remove();calcGrand()">✕</button></td>
+          </tr>
+          <script>loadBatches({{ it.medicine_id }}, {{ loop.index }});</script>
+          {% endfor %}
+        {% else %}
+          <tr id="emptyRow"><td colspan="6" class="text-center text-muted" style="padding:1.5rem">Add medicines above to start dispensing</td></tr>
+        {% endif %}
+      </tbody>
+      <tfoot>
+        <tr style="background:#f8fafc;">
+          <td colspan="4" style="text-align:right;padding:.75rem;font-weight:700;">GRAND TOTAL:</td>
+          <td colspan="2" style="padding:.75rem;"><strong id="grandDisplay" style="font-size:1.1rem;color:#10b981;">{{ cu.currency }}0.00</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+    </div>
+  </div>
+
+  <div class="flex gap-2 mt-4">
+    <button type="submit" class="btn btn-success" style="padding:.6rem 2rem;" onclick="setGrand()">✅ Complete Dispense</button>
+    <a href="{{ url_for('pharmacy_dispense_all') }}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+{% block extra_js %}
+<script>
+let rowId = 100;
+const sym = '{{ cu.currency }}';
+
+function addFromSelector(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt.value) return;
+  addMedRow(opt.value, opt.dataset.name, opt.dataset.stock);
+  sel.value = '';
+}
+
+function addMedRow(medId='', medName='', stock='') {
+  const empty = document.getElementById('emptyRow');
+  if (empty) empty.remove();
+  rowId++;
+  const tr = document.createElement('tr');
+  tr.id = 'dr_' + rowId;
+  tr.innerHTML = `
+    <td>
+      <input type="hidden" name="med_id[]" id="mid_${rowId}" value="${medId}">
+      <select name="med_id[]" class="form-control" onchange="medChanged(this,${rowId})" style="display:${medId?'none':'block'}">
+        <option value="">-- Select medicine --</option>
+        {% for m in medicines %}
+        <option value="{{ m.id }}" data-name="{{ m.medicine_name }}">{{ m.medicine_name }}</option>
+        {% endfor %}
+      </select>
+      ${medId ? `<div style="font-size:.85rem;font-weight:600;">${medName}</div><div style="font-size:.72rem;color:var(--muted);">Stock: ${stock}</div>` : ''}
+    </td>
+    <td>
+      <select name="batch_id[]" class="form-control" onchange="updatePrice(this,${rowId})">
+        <option value="0">Loading...</option>
+      </select>
+      <div id="stock_${rowId}" style="font-size:.7rem;color:var(--muted);margin-top:.25rem;"></div>
+    </td>
+    <td><input type="number" name="qty[]" id="qty_${rowId}" class="form-control" value="1" min="1" oninput="calcRow(${rowId})"></td>
+    <td><input type="number" name="price[]" id="price_${rowId}" class="form-control" step="0.01" value="0" oninput="calcRow(${rowId})"></td>
+    <td><strong id="total_${rowId}" style="color:#10b981;">0.00</strong></td>
+    <td><button type="button" class="btn btn-danger btn-xs" onclick="document.getElementById('dr_${rowId}').remove();calcGrand()">✕</button></td>
+  `;
+  document.getElementById('dispItems').appendChild(tr);
+  if (medId) { loadBatches(medId, rowId); }
+}
+
+function medChanged(sel, rid) {
+  const mid = sel.value;
+  document.getElementById('mid_'+rid).value = mid;
+  loadBatches(mid, rid);
+}
+
+async function loadBatches(medId, rid) {
+  if (!medId) return;
+  try {
+    const r = await fetch('/api/medicine_stock/' + medId);
+    const batches = await r.json();
+    const sel = document.querySelector('#dr_'+rid+' select[name="batch_id[]"]');
+    if (!sel) return;
+    sel.innerHTML = '<option value="0">-- No specific batch --</option>';
+    batches.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.id;
+      opt.dataset.price = b.sale_price;
+      opt.dataset.stock = b.available_quantity;
+      opt.textContent = `Batch: ${b.batch_no} | Exp: ${b.expiry_date} | Stock: ${b.available_quantity} | ₹${b.sale_price}`;
+      sel.appendChild(opt);
+    });
+    if (batches.length > 0) {
+      sel.selectedIndex = 1;
+      updatePrice(sel, rid);
+    }
+  } catch(e) { console.error(e); }
+}
+
+function updatePrice(sel, rid) {
+  const opt = sel.options[sel.selectedIndex];
+  const priceEl = document.getElementById('price_'+rid);
+  const stockEl = document.getElementById('stock_'+rid);
+  if (opt && opt.dataset.price) { priceEl.value = opt.dataset.price; }
+  if (opt && opt.dataset.stock) { stockEl.textContent = 'Available: ' + opt.dataset.stock + ' units'; }
+  calcRow(rid);
+}
+
+function calcRow(rid) {
+  const qty = parseFloat(document.getElementById('qty_'+rid)?.value || 0);
+  const price = parseFloat(document.getElementById('price_'+rid)?.value || 0);
+  const total = (qty * price).toFixed(2);
+  const el = document.getElementById('total_'+rid);
+  if (el) el.textContent = total;
+  calcGrand();
+}
+
+function calcGrand() {
+  let total = 0;
+  document.querySelectorAll('[id^="total_"]').forEach(el => { total += parseFloat(el.textContent || 0); });
+  document.getElementById('grandDisplay').textContent = sym + total.toFixed(2);
+  document.getElementById('grandTotal').value = total.toFixed(2);
+}
+
+function setGrand() {
+  calcGrand();
+}
+</script>
+{% endblock %}

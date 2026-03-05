@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block title %}Write Prescription{% endblock %}
+{% block page_title %}📋 Write Prescription{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Write Prescription</h1><div class="breadcrumb">Pharmacy / Prescriptions / New</div></div>
+  <a href="{{ url_for('pharmacy_list') }}" class="btn btn-secondary">← Back</a>
+</div>
+<form method="POST" id="rxForm">
+<div class="grid-2" style="align-items:start;">
+
+  <div>
+    <div class="card">
+      <div class="card-header"><h3>Patient & Doctor</h3></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Patient *</label>
+            <select name="patient_id" class="form-control" required>
+              <option value="">Search patient...</option>
+              {% for p in patients %}
+              <option value="{{ p.id }}">{{ p.patient_name }} — {{ p.patient_unique_id }} ({{ p.mobileno }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prescribing Doctor</label>
+            <select name="doctor_id" class="form-control">
+              <option value="">Select doctor...</option>
+              {% for d in doctors %}
+              <option value="{{ d.id }}">Dr. {{ d.name }} {{ d.surname }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" name="date" class="form-control" value="{{ today }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Diagnosis</label>
+            <input type="text" name="diagnosis" class="form-control" placeholder="Primary diagnosis">
+          </div>
+        </div>
+        <div class="form-group mt-3">
+          <label class="form-label">Notes / Instructions</label>
+          <textarea name="note" class="form-control" rows="2" placeholder="General instructions for patient..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>Medicine Reference (Stock)</h3></div>
+    <div class="card-body p-0">
+    <div style="max-height:220px;overflow-y:auto;">
+    <table>
+      <thead><tr><th>Medicine</th><th>Unit</th><th>Stock</th></tr></thead>
+      <tbody>
+      {% for m in medicines %}
+      <tr onclick="addMedRow('{{ m.id }}','{{ m.medicine_name }}','{{ m.unit }}')" style="cursor:pointer;">
+        <td><strong>{{ m.medicine_name }}</strong></td>
+        <td>{{ m.unit }}</td>
+        <td>
+          {% if m.stock > 10 %}<span class="badge badge-success">{{ m.stock }}</span>
+          {% elif m.stock > 0 %}<span class="badge badge-warning">{{ m.stock }}</span>
+          {% else %}<span class="badge badge-danger">0</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <div style="padding:.5rem 1rem;font-size:.72rem;color:var(--muted);">Click a medicine to add it to prescription ↑</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3>Prescription Items</h3>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="addMedRow()">+ Add Medicine Row</button>
+  </div>
+  <div class="card-body p-0">
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="min-width:200px;">Medicine Name *</th>
+        <th style="min-width:90px;">Dosage</th>
+        <th style="min-width:110px;">Frequency</th>
+        <th style="min-width:90px;">Duration</th>
+        <th style="min-width:80px;">Qty</th>
+        <th style="min-width:160px;">Instructions</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="rxItems">
+      <tr id="emptyRow"><td colspan="7" class="text-center text-muted" style="padding:1rem;">Click "+ Add Medicine Row" or click a medicine from the list above</td></tr>
+    </tbody>
+  </table>
+  </div>
+  </div>
+</div>
+
+<div class="flex gap-2 mt-4">
+  <button type="submit" class="btn btn-primary" style="padding:.6rem 2rem;">💾 Save Prescription</button>
+  <a href="{{ url_for('pharmacy_list') }}" class="btn btn-secondary">Cancel</a>
+</div>
+</form>
+{% endblock %}
+{% block extra_js %}
+<script>
+let rowCount = 0;
+function addMedRow(medId='', medName='', unit='') {
+  const empty = document.getElementById('emptyRow');
+  if(empty) empty.remove();
+  rowCount++;
+  const tr = document.createElement('tr');
+  tr.id = 'row_'+rowCount;
+  tr.innerHTML = `
+    <td>
+      <input type="hidden" name="medicine_id[]" value="${medId}">
+      <input type="text" name="medicine_name[]" class="form-control" value="${medName}" placeholder="Medicine name" style="min-width:180px;" required>
+    </td>
+    <td><input type="text" name="dosage[]" class="form-control" placeholder="e.g. 500mg" style="min-width:80px;"></td>
+    <td>
+      <select name="frequency[]" class="form-control" style="min-width:100px;">
+        <option>OD (Once daily)</option>
+        <option>BD (Twice daily)</option>
+        <option>TDS (3x daily)</option>
+        <option>QID (4x daily)</option>
+        <option>SOS (As needed)</option>
+        <option>OW (Once weekly)</option>
+        <option>HS (At bedtime)</option>
+      </select>
+    </td>
+    <td><input type="text" name="duration[]" class="form-control" placeholder="e.g. 5 days" style="min-width:80px;"></td>
+    <td><input type="number" name="quantity[]" class="form-control" value="1" min="1" style="min-width:70px;" oninput="calcTotalQty()"></td>
+    <td><input type="text" name="instructions[]" class="form-control" placeholder="After meals, etc." style="min-width:150px;"></td>
+    <td><button type="button" class="btn btn-danger btn-xs" onclick="document.getElementById('row_${rowCount}').remove()">✕</button></td>
+  `;
+  document.getElementById('rxItems').appendChild(tr);
+}
+// Auto-add first row
+addMedRow();
+</script>
+{% endblock %}

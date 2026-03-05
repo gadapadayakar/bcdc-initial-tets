@@ -1,0 +1,22 @@
+{% extends 'base.html' %}{% block title %}Dispense Log{% endblock %}{% block page_title %}Dispense Log{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Medicine Dispense Log</h1></div><a href="{{ url_for('pharmacy_dispense') }}" class="btn btn-success">+ Dispense</a></div>
+<div class="card"><div class="card-header">
+  <form class="flex gap-2 items-center" method="GET">
+    <label class="form-label" style="margin:0;">Date:</label><input type="date" name="date" class="form-control" value="{{ date_filter }}" style="width:170px;">
+    <button type="submit" class="btn btn-primary">Filter</button>
+  </form>
+  <div><strong style="color:var(--success);">Total: {{ current_user.currency_symbol }}{{ "%.2f"|format(total) }}</strong></div>
+</div>
+<div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Patient</th><th>Medicine</th><th>Qty</th><th>Rate</th><th>Total</th><th>Dispensed By</th><th>Payment</th><th>Date</th></tr></thead>
+<tbody>{% for r in records %}<tr>
+  <td><strong>{{ r.patient_name }}</strong><br><small class="text-muted">{{ r.patient_unique_id }}</small></td>
+  <td>{{ r.medicine_name }}<br><small class="text-muted">{{ r.unit }}</small></td>
+  <td>{{ r.quantity }}</td>
+  <td>{{ current_user.currency_symbol }}{{ "%.2f"|format(r.sale_price or 0) }}</td>
+  <td><strong>{{ current_user.currency_symbol }}{{ "%.2f"|format(r.total_amount or 0) }}</strong></td>
+  <td>{{ r.dispensed_by_name or '—' }}</td>
+  <td>{% if r.payment_status=='paid' %}<span class="badge badge-success">Paid</span>{% else %}<span class="badge badge-warning">Credit</span>{% endif %}</td>
+  <td>{{ r.dispense_date }}</td>
+</tr>{% else %}<tr><td colspan="8" class="text-center text-muted" style="padding:2rem">No dispensing records for {{ date_filter }}.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

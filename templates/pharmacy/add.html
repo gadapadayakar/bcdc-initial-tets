@@ -1,0 +1,26 @@
+{% extends 'base.html' %}{% block title %}Add Medicine{% endblock %}{% block page_title %}Add Medicine{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Add New Medicine</h1></div><a href="{{ url_for('pharmacy_list') }}" class="btn btn-secondary">← Back</a></div>
+<div class="card"><div class="card-body"><form method="POST">
+  <div class="form-section">Medicine Information</div>
+  <div class="form-grid">
+    <div class="form-group"><label class="form-label">Medicine Name *</label><input type="text" name="medicine_name" class="form-control" required></div>
+    <div class="form-group"><label class="form-label">Category *</label>
+      <select name="medicine_category_id" class="form-control" required>{% for c in categories %}<option value="{{ c.id }}">{{ c.medicine_category }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label">Company</label><input type="text" name="medicine_company" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Composition</label><input type="text" name="medicine_composition" class="form-control" placeholder="Active ingredient(s)"></div>
+    <div class="form-group"><label class="form-label">Medicine Group</label><input type="text" name="medicine_group" class="form-control" placeholder="e.g. Antibiotic"></div>
+    <div class="form-group"><label class="form-label">Unit</label>
+      <select name="unit" class="form-control"><option>Tablet</option><option>Capsule</option><option>Syrup</option><option>Injection</option><option>Cream</option><option>Drops</option><option>Inhaler</option><option>Powder</option></select></div>
+    <div class="form-group"><label class="form-label">Reorder Level</label><input type="number" name="reorder_level" class="form-control" value="20"></div>
+  </div>
+  <div class="form-section">Opening Stock Batch (Optional)</div>
+  <div class="form-grid">
+    <div class="form-group"><label class="form-label">Batch Number</label><input type="text" name="batch_no" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Manufacture Date</label><input type="date" name="manufacture_date" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Expiry Date</label><input type="date" name="expiry_date" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Purchase Price</label><input type="number" name="purchase_price" class="form-control" step="0.01" value="0"></div>
+    <div class="form-group"><label class="form-label">Sale Price</label><input type="number" name="sale_price" class="form-control" step="0.01" value="0"></div>
+    <div class="form-group"><label class="form-label">Opening Quantity</label><input type="number" name="quantity" class="form-control" value="0"></div>
+  </div>
+  <div class="mt-4 flex gap-2"><button type="submit" class="btn btn-primary">Add Medicine</button><a href="{{ url_for('pharmacy_list') }}" class="btn btn-secondary">Cancel</a></div>
+</form></div></div>{% endblock %}

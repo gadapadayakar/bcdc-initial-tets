@@ -1,0 +1,27 @@
+{% extends 'base.html' %}{% block title %}Edit Medicine{% endblock %}{% block page_title %}Edit Medicine{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Edit: {{ med.medicine_name }}</h1></div><a href="{{ url_for('pharmacy_list') }}" class="btn btn-secondary">← Back</a></div>
+<div class="card"><div class="card-body"><form method="POST">
+  <div class="form-grid">
+    <div class="form-group"><label class="form-label">Medicine Name *</label><input type="text" name="medicine_name" class="form-control" value="{{ med.medicine_name }}" required></div>
+    <div class="form-group"><label class="form-label">Category</label>
+      <select name="medicine_category_id" class="form-control">{% for c in categories %}<option value="{{ c.id }}" {% if c.id==med.medicine_category_id %}selected{% endif %}>{{ c.medicine_category }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label">Company</label><input type="text" name="medicine_company" class="form-control" value="{{ med.medicine_company }}"></div>
+    <div class="form-group"><label class="form-label">Composition</label><input type="text" name="medicine_composition" class="form-control" value="{{ med.medicine_composition }}"></div>
+    <div class="form-group"><label class="form-label">Group</label><input type="text" name="medicine_group" class="form-control" value="{{ med.medicine_group }}"></div>
+    <div class="form-group"><label class="form-label">Unit</label><input type="text" name="unit" class="form-control" value="{{ med.unit }}"></div>
+    <div class="form-group"><label class="form-label">Reorder Level</label><input type="number" name="reorder_level" class="form-control" value="{{ med.reorder_level }}"></div>
+  </div>
+  <div class="form-section">Current Batches</div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Batch No</th><th>Manufacture</th><th>Expiry</th><th>Purchase Price</th><th>Sale Price</th><th>Available Qty</th></tr></thead>
+    <tbody>{% for b in batches %}<tr>
+      <td>{{ b.batch_no }}</td><td>{{ b.manufacture_date }}</td><td>{{ b.expiry_date }}</td>
+      <td>{{ current_user.currency_symbol }}{{ b.purchase_price }}</td><td>{{ current_user.currency_symbol }}{{ b.sale_price }}</td><td>{{ b.available_quantity }}</td>
+    </tr>{% else %}<tr><td colspan="6" class="text-muted text-center" style="padding:1rem">No batches</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <div class="mt-4 flex gap-2">
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a href="{{ url_for('pharmacy_stock_in',mid=med.id) }}" class="btn btn-info">+ Add Stock</a>
+    <a href="{{ url_for('pharmacy_list') }}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form></div></div>{% endblock %}

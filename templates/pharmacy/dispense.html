@@ -1,0 +1,167 @@
+{% extends 'base.html' %}{% block title %}Dispense Medicines{% endblock %}{% block page_title %}Dispense Medicines to Patient{% endblock %}
+{% block extra_css %}
+<style>
+.med-row{display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 80px;gap:.5rem;align-items:end;padding:.75rem;border:1px solid var(--border);border-radius:.5rem;margin-bottom:.5rem;background:#fafafa;}
+.med-row:hover{background:#f0f4ff;}
+.remove-btn{color:var(--danger);cursor:pointer;font-size:1.1rem;background:none;border:none;padding:.25rem .5rem;}
+#bill-total{font-size:1.5rem;font-weight:800;color:var(--success);}
+</style>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>💉 Dispense Medicines</h1><div class="breadcrumb">Pharmacy / Dispense to Patient</div></div>
+  <div class="flex gap-2">
+    <a href="{{ url_for('pharmacy_dispense_all') }}" class="btn btn-secondary">📋 Dispense Log</a>
+    <a href="{{ url_for('pharmacy_list') }}" class="btn btn-secondary">← Stock</a>
+  </div>
+</div>
+
+<form method="POST" id="dispenseForm">
+<div class="grid-2" style="align-items:start;">
+  <div>
+    <div class="card">
+      <div class="card-header"><h3>Patient Details</h3></div>
+      <div class="card-body">
+        <div class="form-group mb-3">
+          <label class="form-label">Select Patient *</label>
+          <select name="patient_id" class="form-control" required id="patientSelect" onchange="loadPatientInfo(this)">
+            <option value="">— Search patient —</option>
+            {% for p in patients %}<option value="{{ p.id }}" data-bg="{{ p.blood_group }}" data-id="{{ p.patient_unique_id }}">{{ p.patient_name }} ({{ p.patient_unique_id }})</option>{% endfor %}
+          </select>
+        </div>
+        <div id="patientInfo" style="display:none;background:#f0f9ff;border:1px solid #bae6fd;border-radius:.5rem;padding:.75rem;font-size:.8rem;">
+          <strong id="pName"></strong><br>
+          ID: <span id="pId"></span> | Blood: <span id="pBg"></span>
+        </div>
+        <div class="form-grid-2 mt-3">
+          <div class="form-group"><label class="form-label">Dispense Date</label><input type="date" name="dispense_date" class="form-control" value="{{ today }}"></div>
+          <div class="form-group"><label class="form-label">Payment Status</label>
+            <select name="payment_status" class="form-control"><option value="paid">Paid</option><option value="unpaid">Unpaid/Credit</option></select></div>
+        </div>
+        <div class="form-grid-2 mt-2">
+          <div class="form-group"><label class="form-label">OPD Ref # (optional)</label><input type="number" name="opd_id" class="form-control" value="0"></div>
+          <div class="form-group"><label class="form-label">IPD Ref # (optional)</label><input type="number" name="ipd_id" class="form-control" value="0"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header"><h3>Bill Summary</h3></div>
+      <div class="card-body">
+        <table style="width:100%;font-size:.82rem;" id="billTable">
+          <thead><tr><th>Medicine</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+          <tbody id="billBody"><tr><td colspan="4" class="text-muted text-center" style="padding:.5rem">Add medicines →</td></tr></tbody>
+        </table>
+        <div style="text-align:right;margin-top:.75rem;padding-top:.75rem;border-top:2px solid var(--border);">
+          <div style="font-size:.8rem;color:var(--muted);">Total Bill</div>
+          <div id="bill-total">$0.00</div>
+        </div>
+        <div class="mt-3"><button type="submit" class="btn btn-success" style="width:100%;padding:.65rem;">✅ Dispense & Save</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>Add Medicines</h3>
+      <button type="button" class="btn btn-primary btn-sm" onclick="addRow()">+ Add Row</button>
+    </div>
+    <div class="card-body">
+      <div id="medRows"></div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem;">Click "+ Add Row" to add each medicine. Select medicine, then quantity automatically calculates total.</div>
+    </div>
+  </div>
+</div>
+</form>
+
+<!-- Medicine data for JS -->
+<script>
+const medicines = {{ medicines|tojson }};
+const medMap = {};
+medicines.forEach(m => { medMap[m.id] = m; });
+
+function loadPatientInfo(sel){
+  const opt = sel.selectedOptions[0];
+  if(opt.value){
+    document.getElementById('patientInfo').style.display='block';
+    document.getElementById('pName').textContent=opt.text;
+    document.getElementById('pId').textContent=opt.dataset.id;
+    document.getElementById('pBg').textContent=opt.dataset.bg;
+  } else { document.getElementById('patientInfo').style.display='none'; }
+}
+
+let rowCount=0;
+function addRow(){
+  rowCount++;
+  const r=document.createElement('div');
+  r.className='med-row'; r.id='row'+rowCount;
+  r.innerHTML=`
+    <div><label class="form-label">Medicine *</label>
+      <select name="medicine_id" class="form-control" onchange="medSelected(this,${rowCount})" required>
+        <option value="">Select medicine...</option>
+        ${medicines.map(m=>`<option value="${m.id}" data-price="${m.sale_price||0}" data-stock="${m.total_qty}">${m.medicine_name} (Stock: ${m.total_qty||0})</option>`).join('')}
+      </select></div>
+    <div><label class="form-label">Batch</label>
+      <select name="batch_id" class="form-control" id="batch${rowCount}"><option value="">Auto-select</option></select></div>
+    <div><label class="form-label">Qty *</label>
+      <input type="number" name="quantity" class="form-control" value="1" min="1" id="qty${rowCount}" oninput="calcRow(${rowCount})" required></div>
+    <div><label class="form-label">Rate</label>
+      <input type="text" class="form-control" id="rate${rowCount}" readonly style="background:#f8fafc;"></div>
+    <div><label class="form-label">Amount</label>
+      <input type="text" class="form-control" id="amt${rowCount}" readonly style="background:#f8fafc;font-weight:700;"></div>
+    <div style="display:flex;align-items:flex-end;padding-bottom:2px;">
+      <button type="button" class="remove-btn" onclick="removeRow(${rowCount})">✕</button></div>
+    <div style="grid-column:1/-1;"><label class="form-label">Note</label>
+      <input type="text" name="item_note" class="form-control" placeholder="Dosage: 1 tablet twice daily..."></div>`;
+  document.getElementById('medRows').appendChild(r);
+  updateBill();
+}
+
+function medSelected(sel,rid){
+  const mid=sel.value;
+  if(!mid) return;
+  const m=medMap[parseInt(mid)];
+  document.getElementById('rate'+rid).value='$'+(m.sale_price||0).toFixed(2);
+  calcRow(rid);
+  // Load batches via API
+  fetch('/pharmacy/'+mid+'/batches').then(r=>r.json()).then(batches=>{
+    const bs=document.getElementById('batch'+rid);
+    bs.innerHTML='<option value="">Auto-select</option>';
+    batches.forEach(b=>{ const o=document.createElement('option'); o.value=b.id; o.text=`${b.batch_no||'No batch'} | Exp:${b.expiry_date} | Qty:${b.available_quantity}`; bs.appendChild(o); });
+  });
+}
+
+function calcRow(rid){
+  const medSel=document.querySelector('#row'+rid+' select[name=medicine_id]');
+  if(!medSel||!medSel.value) return;
+  const m=medMap[parseInt(medSel.value)];
+  const qty=parseInt(document.getElementById('qty'+rid).value)||0;
+  const rate=m.sale_price||0;
+  const amt=rate*qty;
+  document.getElementById('rate'+rid).value='$'+rate.toFixed(2);
+  document.getElementById('amt'+rid).value='$'+amt.toFixed(2);
+  updateBill();
+}
+
+function removeRow(rid){ const r=document.getElementById('row'+rid); if(r) r.remove(); updateBill(); }
+
+function updateBill(){
+  let total=0; const rows=[];
+  document.querySelectorAll('.med-row').forEach(row=>{
+    const sel=row.querySelector('select[name=medicine_id]');
+    const qtyEl=row.querySelector('input[name=quantity]');
+    const amtEl=row.querySelector('[id^=amt]');
+    if(sel&&sel.value&&amtEl){
+      const amt=parseFloat((amtEl.value||'0').replace('$',''))||0;
+      const qty=parseInt(qtyEl?.value||1);
+      total+=amt;
+      rows.push({name:sel.selectedOptions[0]?.text||'',qty,rate:amt/qty,amt});
+    }
+  });
+  document.getElementById('bill-total').textContent='$'+total.toFixed(2);
+  const tbody=document.getElementById('billBody');
+  if(rows.length===0){ tbody.innerHTML='<tr><td colspan="4" class="text-muted text-center" style="padding:.5rem">Add medicines →</td></tr>'; return; }
+  tbody.innerHTML=rows.map(r=>`<tr><td>${r.name.split('(')[0]}</td><td>${r.qty}</td><td>$${r.rate.toFixed(2)}</td><td><strong>$${r.amt.toFixed(2)}</strong></td></tr>`).join('');
+}
+
+// Auto-add first row
+addRow();
+</script>
+{% endblock %}

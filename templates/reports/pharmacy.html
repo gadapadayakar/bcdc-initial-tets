@@ -1,0 +1,30 @@
+{% extends 'base.html' %}{% block title %}Pharmacy Report{% endblock %}{% block page_title %}Pharmacy Report{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Pharmacy Report</h1></div><a href="{{ url_for('reports') }}" class="btn btn-secondary">← Reports</a></div>
+<div class="card mb-3"><div class="card-header">
+  <form class="flex gap-2 items-center" method="GET">
+    <label class="form-label" style="margin:0;">From:</label><input type="date" name="start" class="form-control" value="{{ start }}" style="width:160px;">
+    <label class="form-label" style="margin:0;">To:</label><input type="date" name="end" class="form-control" value="{{ end }}" style="width:160px;">
+    <button type="submit" class="btn btn-primary">Generate</button>
+  </form>
+</div></div>
+<div class="stats-grid">
+  <div class="stat-card" style="--card-color:#10b981;"><div class="stat-label">Total Revenue</div><div class="stat-value">{{ current_user.currency_symbol }}{{ "%.0f"|format(total_revenue) }}</div></div>
+  <div class="stat-card" style="--card-color:#2563eb;"><div class="stat-label">Transactions</div><div class="stat-value">{{ dispenses|length }}</div></div>
+</div>
+<div class="grid-2">
+<div class="card"><div class="card-header"><h3>Top 10 Medicines Dispensed</h3></div><div class="card-body p-0"><table>
+<thead><tr><th>Medicine</th><th>Total Qty</th><th>Revenue</th></tr></thead>
+<tbody>{% for m in top_medicines %}<tr>
+  <td>{{ m.medicine_name }}</td><td>{{ m.total_qty }}</td>
+  <td><strong style="color:var(--success);">{{ current_user.currency_symbol }}{{ "%.2f"|format(m.total_revenue or 0) }}</strong></td>
+</tr>{% else %}<tr><td colspan="3" class="text-center text-muted" style="padding:1.5rem">No data.</td></tr>{% endfor %}</tbody>
+</table></div></div>
+<div class="card"><div class="card-header"><h3>Dispense Records</h3></div><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Date</th><th>Patient</th><th>Medicine</th><th>Qty</th><th>Amount</th><th>By</th></tr></thead>
+<tbody>{% for r in dispenses %}<tr>
+  <td>{{ r.dispense_date }}</td><td>{{ r.patient_name }}</td><td>{{ r.medicine_name }}</td>
+  <td>{{ r.quantity }}</td><td><strong>{{ current_user.currency_symbol }}{{ "%.2f"|format(r.total_amount or 0) }}</strong></td>
+  <td>{{ r.dispensed_by_name or '—' }}</td>
+</tr>{% else %}<tr><td colspan="6" class="text-center text-muted" style="padding:1.5rem">No records.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>
+</div>{% endblock %}

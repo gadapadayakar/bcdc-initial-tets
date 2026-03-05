@@ -1,0 +1,26 @@
+{% extends 'base.html' %}{% block title %}Blood Request{% endblock %}{% block page_title %}Request Blood{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Blood Request</h1></div><a href="{{ url_for('bloodbank') }}" class="btn btn-secondary">← Back</a></div>
+<div class="card mb-4"><div class="card-header"><h3>Current Inventory</h3></div><div class="card-body">
+  <div class="flex gap-2" style="flex-wrap:wrap;">
+    {% for bg,units in inventory.items() %}
+    <div style="text-align:center;padding:.5rem .875rem;border-radius:.5rem;border:2px solid {% if units>10 %}#10b981{% elif units>0 %}#f59e0b{% else %}#ef4444{% endif %};min-width:60px;">
+      <div style="font-weight:800;font-size:1rem;">{{ bg }}</div>
+      <div style="font-size:.75rem;color:var(--muted);">{{ units }} units</div>
+    </div>{% endfor %}
+  </div>
+</div></div>
+<div class="card"><div class="card-body"><form method="POST">
+  <div class="form-grid">
+    <div class="form-group"><label class="form-label">Patient</label>
+      <select name="patient_id" class="form-control"><option value="0">External / Walk-in</option>{% for p in patients %}<option value="{{ p.id }}">{{ p.patient_name }} ({{ p.patient_unique_id }})</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label">Blood Group *</label>
+      <select name="blood_group" class="form-control" required>{% for bg in blood_groups %}<option>{{ bg }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label">Units Required</label><input type="number" name="units_required" class="form-control" value="1" min="1"></div>
+    <div class="form-group"><label class="form-label">Required By</label><input type="date" name="required_date" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Doctor</label>
+      <select name="doctor_id" class="form-control"><option value="0">Select…</option>{% for d in doctors %}<option value="{{ d.id }}">{{ d.name }} {{ d.surname }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label">Purpose</label><input type="text" name="purpose" class="form-control" placeholder="e.g. Surgery, Emergency…"></div>
+  </div>
+  <div class="form-group mt-3"><label class="form-label">Notes</label><textarea name="note" class="form-control" rows="2"></textarea></div>
+  <div class="mt-4 flex gap-2"><button type="submit" class="btn btn-primary">Submit Request</button><a href="{{ url_for('bloodbank') }}" class="btn btn-secondary">Cancel</a></div>
+</form></div></div>{% endblock %}

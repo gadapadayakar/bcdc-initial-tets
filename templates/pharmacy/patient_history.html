@@ -1,0 +1,19 @@
+{% extends 'base.html' %}{% block title %}Patient Medicine History{% endblock %}{% block page_title %}Patient Medicine History{% endblock %}{% block content %}
+<div class="page-header">
+  <div><h1>Medicine History: {{ patient.patient_name }}</h1><div class="breadcrumb">{{ patient.patient_unique_id }}</div></div>
+  <a href="{{ url_for('patient_view',pid=patient.id) }}" class="btn btn-secondary">← Patient</a>
+</div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Date</th><th>Medicine</th><th>Batch</th><th>Expiry</th><th>Qty</th><th>Rate</th><th>Total</th><th>Dispensed By</th><th>Payment</th></tr></thead>
+<tbody>{% for r in records %}<tr>
+  <td>{{ r.dispense_date }}</td>
+  <td><strong>{{ r.medicine_name }}</strong><br><small class="text-muted">{{ r.unit }}</small></td>
+  <td>{{ r.batch_no or '—' }}</td>
+  <td>{{ r.expiry_date or '—' }}</td>
+  <td>{{ r.quantity }}</td>
+  <td>{{ current_user.currency_symbol }}{{ "%.2f"|format(r.sale_price or 0) }}</td>
+  <td><strong>{{ current_user.currency_symbol }}{{ "%.2f"|format(r.total_amount or 0) }}</strong></td>
+  <td>{{ r.dispensed_by_name or '—' }}</td>
+  <td>{% if r.payment_status=='paid' %}<span class="badge badge-success">Paid</span>{% else %}<span class="badge badge-warning">Credit</span>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="9" class="text-center text-muted" style="padding:2rem">No medicine history.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

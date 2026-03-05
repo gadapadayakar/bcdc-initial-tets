@@ -1,0 +1,26 @@
+{% extends 'base.html' %}{% block title %}New Role{% endblock %}{% block page_title %}Create Role{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Create New Role</h1></div><a href="{{ url_for('admin_roles') }}" class="btn btn-secondary">← Back</a></div>
+<div class="card"><div class="card-body"><form method="POST">
+  <div class="form-grid-2">
+    <div class="form-group"><label class="form-label">Role Name *</label><input type="text" name="name" class="form-control" required></div>
+    <div class="form-group"><label class="form-label">Description</label><input type="text" name="description" class="form-control"></div>
+  </div>
+  <div class="form-section">Module Permissions</div>
+  <div class="table-wrap"><table class="perm-table">
+    <thead><tr><th style="min-width:180px;">Module</th><th>👁 View</th><th>➕ Add</th><th>✏ Edit</th><th>🗑 Delete</th></tr></thead>
+    <tbody>{% for mod in modules %}
+    <tr>
+      <td><span class="module-label">{{ mod.replace('hr_','HR: ').replace('_',' ')|title }}</span></td>
+      <td><input type="checkbox" class="perm-check" name="{{ mod }}_view" value="1"></td>
+      <td><input type="checkbox" class="perm-check" name="{{ mod }}_add" value="1"></td>
+      <td><input type="checkbox" class="perm-check" name="{{ mod }}_edit" value="1"></td>
+      <td><input type="checkbox" class="perm-check" name="{{ mod }}_delete" value="1"></td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  <div class="mt-3 flex gap-2">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="setAll(true)">Select All</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="setAll(false)">Clear All</button>
+  </div>
+  <div class="mt-4 flex gap-2"><button type="submit" class="btn btn-primary">Create Role</button><a href="{{ url_for('admin_roles') }}" class="btn btn-secondary">Cancel</a></div>
+</form></div></div>{% endblock %}
+{% block extra_js %}<script>function setAll(v){document.querySelectorAll('.perm-check').forEach(c=>c.checked=v);}</script>{% endblock %}

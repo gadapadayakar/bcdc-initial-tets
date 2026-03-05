@@ -1,0 +1,70 @@
+{% extends 'base.html' %}{% block title %}Admin Panel{% endblock %}{% block page_title %}Administration{% endblock %}{% block content %}
+<div class="page-header"><div><h1>🏛 Admin Panel</h1><div class="breadcrumb">Control Center</div></div></div>
+
+<div class="stats-grid">
+  <div class="stat-card" style="--card-color:#2563eb;"><div class="stat-label">Total Users</div><div class="stat-value">{{ stats.total_users }}</div><div class="stat-sub">Active staff accounts</div></div>
+  <div class="stat-card" style="--card-color:#8b5cf6;"><div class="stat-label">Total Roles</div><div class="stat-value">{{ stats.total_roles }}</div><div class="stat-sub">Permission groups</div></div>
+  <div class="stat-card" style="--card-color:#10b981;"><div class="stat-label">Today Logins</div><div class="stat-value">{{ stats.today_logins }}</div><div class="stat-sub">Login sessions</div></div>
+  <div class="stat-card" style="--card-color:#f59e0b;"><div class="stat-label">Total Actions</div><div class="stat-value">{{ stats.total_actions }}</div><div class="stat-sub">Audit log entries</div></div>
+</div>
+
+<div class="grid-3">
+  {% for title,icon,url,desc in [
+    ('User Management','👥',url_for('admin_users'),'Manage staff accounts, activate/deactivate, reset passwords'),
+    ('Roles & Permissions','🔐',url_for('admin_roles'),'Define roles and granular module permissions matrix'),
+    ('Audit Log','📜',url_for('admin_audit_log'),'Full trail of all user actions across all modules'),
+    ('Settings','⚙',url_for('admin_settings'),'Hospital name, currency, theme, date formats'),
+    ('Departments','🏢',url_for('admin_departments'),'Manage clinical and administrative departments'),
+    ('Add New Role','✚',url_for('admin_role_add'),'Create a new role with custom permissions'),
+  ] %}
+  <a href="{{ url }}" style="text-decoration:none;">
+    <div class="card" style="cursor:pointer;transition:.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      <div class="card-body">
+        <div style="font-size:2rem;margin-bottom:.5rem;">{{ icon }}</div>
+        <div style="font-weight:700;font-size:.95rem;margin-bottom:.375rem;">{{ title }}</div>
+        <div style="font-size:.78rem;color:var(--muted);">{{ desc }}</div>
+      </div>
+    </div>
+  </a>{% endfor %}
+</div>
+
+<div class="grid-2">
+<div class="card">
+  <div class="card-header"><h3>👥 Roles Overview</h3><a href="{{ url_for('admin_roles') }}" class="btn btn-secondary btn-sm">Manage</a></div>
+  <div class="card-body p-0"><table>
+    <thead><tr><th>Role</th><th>Staff Count</th><th>Actions</th></tr></thead>
+    <tbody>{% for r in roles %}<tr>
+      <td><span class="badge badge-purple">{{ r.name }}</span></td>
+      <td>{{ r.staff_count }} users</td>
+      <td><a href="{{ url_for('admin_role_permissions',rid=r.id) }}" class="btn btn-secondary btn-xs">Permissions</a></td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+<div class="card">
+  <div class="card-header"><h3>🔐 Recent Logins</h3><a href="{{ url_for('admin_audit_log') }}" class="btn btn-secondary btn-sm">Audit Log</a></div>
+  <div class="card-body p-0"><table>
+    <thead><tr><th>User</th><th>Role</th><th>Action</th><th>Time</th><th>IP</th></tr></thead>
+    <tbody>{% for l in user_logs[:10] %}<tr>
+      <td>{{ l.user_name }}</td><td>{{ l.role }}</td>
+      <td>{% if l.action=='logout' %}<span class="badge badge-secondary">Logout</span>{% else %}<span class="badge badge-success">Login</span>{% endif %}</td>
+      <td style="font-size:.75rem;">{{ l.login_time[:16] if l.login_time else '—' }}</td>
+      <td style="font-size:.72rem;color:var(--muted);">{{ l.ip_address }}</td>
+    </tr>{% else %}<tr><td colspan="5" class="text-center text-muted" style="padding:1rem">No logins.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h3>📜 Recent Audit Log</h3><a href="{{ url_for('admin_audit_log') }}" class="btn btn-secondary btn-sm">View All</a></div>
+  <div class="card-body p-0"><div class="table-wrap"><table>
+    <thead><tr><th>Time</th><th>User</th><th>Module</th><th>Action</th><th>Details</th><th>IP</th></tr></thead>
+    <tbody>{% for l in recent_logs %}<tr>
+      <td style="font-size:.75rem;white-space:nowrap;">{{ l.created_at[:16] }}</td>
+      <td>{{ l.user_name }}</td>
+      <td><span class="badge badge-info">{{ l.module }}</span></td>
+      <td><span class="badge badge-secondary">{{ l.action }}</span></td>
+      <td style="font-size:.78rem;">{{ (l.details or '')[:50] }}</td>
+      <td style="font-size:.72rem;color:var(--muted);">{{ l.ip_address }}</td>
+    </tr>{% else %}<tr><td colspan="6" class="text-center text-muted" style="padding:1rem">No activity logged.</td></tr>{% endfor %}</tbody>
+  </table></div></div>
+</div>{% endblock %}

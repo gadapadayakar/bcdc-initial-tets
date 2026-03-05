@@ -1,0 +1,25 @@
+{% extends 'base.html' %}{% block title %}Lab{% endblock %}{% block page_title %}Laboratory{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Lab Reports</h1></div>{% if user_perms.get('lab',{}).get('add') %}<a href="{{ url_for('lab_add') }}" class="btn btn-primary">+ New Test</a>{% endif %}</div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Patient</th><th>Test</th><th>Date</th><th>Doctor</th><th>Result</th><th>Range</th><th>Status</th><th>Actions</th></tr></thead>
+<tbody>{% for r in records %}<tr>
+  <td>{{ r.patient_name }}<br><small class="text-muted">{{ r.patient_unique_id }}</small></td>
+  <td><strong>{{ r.test_name }}</strong></td><td>{{ r.test_date }}</td><td>{{ r.doctor_name or "—" }}</td>
+  <td>{{ r.result or "—" }}</td><td>{{ r.normal_range or "—" }} {{ r.unit or "" }}</td>
+  <td>{% if r.status=='completed' %}<span class="badge badge-success">Done</span>{% else %}<span class="badge badge-warning">Pending</span>{% endif %}</td>
+  <td>{% if r.status=='pending' and user_perms.get('lab',{}).get('edit') %}
+    <button class="btn btn-primary btn-xs" onclick="openResult({{ r.id }})">Add Result</button>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="8" class="text-center text-muted" style="padding:2rem">No lab records.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>
+<div id="resultModal" class="modal-bg">
+  <div class="modal"><h3>Add Lab Result</h3>
+    <form id="resultForm" method="POST">
+      <div class="form-group"><label class="form-label">Result</label><textarea name="result" class="form-control" rows="3"></textarea></div>
+      <div class="form-group mt-2"><label class="form-label">Status</label>
+        <select name="status" class="form-control"><option value="completed">Completed</option><option value="pending">Pending</option></select></div>
+      <div class="mt-4 flex gap-2"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-secondary" onclick="document.getElementById('resultModal').classList.remove('show')">Cancel</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>function openResult(id){document.getElementById('resultForm').action='/lab/'+id+'/result';document.getElementById('resultModal').classList.add('show');}</script>{% endblock %}

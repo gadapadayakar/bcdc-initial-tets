@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Leave Management{% endblock %}
+{% block page_title %}Leave Management{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Leave Applications</h1></div>
+  {% if user_perms.get('hr_leave',{}).get('add') %}<a href="{{ url_for('hr_leave_add') }}" class="btn btn-primary">+ Apply Leave</a>{% endif %}
+</div>
+<div class="card">
+  <div class="card-body p-0">
+  <div class="table-wrap"><table>
+  <thead><tr><th>Emp ID</th><th>Staff</th><th>Leave Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for r in records %}<tr>
+    <td>{{ r.employee_id }}</td>
+    <td>{{ r.name }} {{ r.surname }}</td>
+    <td>{{ r.leave_name }}</td>
+    <td>{{ r.from_date }}</td>
+    <td>{{ r.to_date }}</td>
+    <td>{{ r.total_days }}</td>
+    <td>{{ (r.reason or '')[:40] }}</td>
+    <td>{% if r.status=='approved' %}<span class="badge badge-success">Approved</span>
+      {% elif r.status=='rejected' %}<span class="badge badge-danger">Rejected</span>
+      {% else %}<span class="badge badge-warning">Pending</span>{% endif %}</td>
+    <td>
+      {% if r.status=='pending' and user_perms.get('hr_leave',{}).get('edit') %}
+      <form method="POST" action="{{ url_for('hr_leave_approve', lid=r.id) }}" style="display:inline">
+        <input type="hidden" name="status" value="approved">
+        <button class="btn btn-success btn-xs">Approve</button>
+      </form>
+      <form method="POST" action="{{ url_for('hr_leave_approve', lid=r.id) }}" style="display:inline">
+        <input type="hidden" name="status" value="rejected">
+        <button class="btn btn-danger btn-xs">Reject</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>{% else %}<tr><td colspan="9" class="text-center text-muted" style="padding:2rem">No leave applications.</td></tr>{% endfor %}
+  </tbody></table></div>
+  </div>
+</div>
+{% endblock %}

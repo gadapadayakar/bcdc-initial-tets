@@ -1,0 +1,31 @@
+{% extends 'base.html' %}{% block title %}User Management{% endblock %}{% block page_title %}User Management{% endblock %}{% block content %}
+<div class="page-header"><div><h1>User Management</h1><div class="breadcrumb">Admin / Users</div></div><a href="{{ url_for('staff_add') }}" class="btn btn-primary">+ Add User</a></div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Emp ID</th><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+<tbody>{% for u in users %}<tr>
+  <td><strong>{{ u.employee_id or '—' }}</strong></td>
+  <td>{{ u.name }} {{ u.surname }}</td>
+  <td>{{ u.email }}</td>
+  <td><span class="badge badge-purple">{{ u.role_name or 'Staff' }}</span></td>
+  <td>{{ u.department_name or '—' }}</td>
+  <td>{% if u.is_active %}<span class="badge badge-success"><span class="dot dot-green"></span>Active</span>{% else %}<span class="badge badge-danger"><span class="dot dot-red"></span>Inactive</span>{% endif %}</td>
+  <td>
+    {% if u.id != current_user.id %}
+    <form method="POST" action="{{ url_for('admin_user_toggle',uid=u.id) }}" style="display:inline">
+      <button class="btn btn-{{ 'warning' if u.is_active else 'success' }} btn-xs">{{ 'Deactivate' if u.is_active else 'Activate' }}</button>
+    </form>
+    {% endif %}
+    <button class="btn btn-secondary btn-xs" onclick="resetPw({{ u.id }})">Reset PW</button>
+    <a href="{{ url_for('staff_edit',sid=u.id) }}" class="btn btn-info btn-xs">Edit</a>
+  </td>
+</tr>{% else %}<tr><td colspan="7" class="text-center text-muted" style="padding:2rem">No users.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>
+
+<div id="pwModal" class="modal-bg"><div class="modal"><h3>Reset Password</h3>
+  <form id="pwForm" method="POST">
+    <div class="form-group"><label class="form-label">New Password</label><input type="text" name="new_password" class="form-control" value="admin123"></div>
+    <div class="mt-4 flex gap-2"><button type="submit" class="btn btn-danger">Reset</button><button type="button" class="btn btn-secondary" onclick="document.getElementById('pwModal').classList.remove('show')">Cancel</button></div>
+  </form>
+</div></div>
+{% endblock %}
+{% block extra_js %}<script>function resetPw(uid){document.getElementById('pwForm').action='/admin/users/'+uid+'/reset_password';document.getElementById('pwModal').classList.add('show');}</script>{% endblock %}

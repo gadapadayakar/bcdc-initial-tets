@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% block title %}My Portal{% endblock %}
+{% block page_title %}My Self-Service Portal{% endblock %}
+{% block content %}
+
+<!-- Welcome Banner -->
+<div style="background:linear-gradient(135deg,#F7941D,#e07d10);border-radius:.875rem;padding:1.5rem 2rem;margin-bottom:1.5rem;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+  <div>
+    <div style="font-size:1.4rem;font-weight:800;margin-bottom:.25rem;">
+      👋 Hello, {{ me.name }} {{ me.surname }}!
+    </div>
+    <div style="opacity:.9;font-size:.85rem;">
+      {{ me.employee_id }} &nbsp;|&nbsp; {{ me.role_name }} &nbsp;|&nbsp; {{ me.department_name }}
+    </div>
+    <div style="opacity:.75;font-size:.78rem;margin-top:.25rem;">
+      Designation: {{ me.designation_name or '—' }} &nbsp;|&nbsp; Joined: {{ me.date_of_joining or '—' }}
+    </div>
+  </div>
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+    <a href="{{ url_for('my_leave') }}" class="btn btn-secondary" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.4);">📋 Apply Leave</a>
+    <a href="{{ url_for('my_profile') }}" class="btn btn-secondary" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.4);">👤 My Profile</a>
+  </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="stats-grid">
+  <div class="stat-card" style="--card-color:#F7941D;">
+    <div class="stat-label">Pending Leaves</div>
+    <div class="stat-value">{{ my_leaves_pending }}</div>
+    <div class="stat-sub">Awaiting approval</div>
+    <div class="stat-icon">⏳</div>
+  </div>
+  <div class="stat-card" style="--card-color:#2e7d32;">
+    <div class="stat-label">Approved Leaves</div>
+    <div class="stat-value">{{ my_leaves_approved }}</div>
+    <div class="stat-sub">This year</div>
+    <div class="stat-icon">✅</div>
+  </div>
+  <div class="stat-card" style="--card-color:#1565C0;">
+    <div class="stat-label">Days Present</div>
+    <div class="stat-value">{{ my_attend_month }}</div>
+    <div class="stat-sub">This month</div>
+    <div class="stat-icon">📅</div>
+  </div>
+  <div class="stat-card" style="--card-color:#c62828;">
+    <div class="stat-label">Days Absent</div>
+    <div class="stat-value">{{ my_absent_month }}</div>
+    <div class="stat-sub">This month</div>
+    <div class="stat-icon">❌</div>
+  </div>
+  <div class="stat-card" style="--card-color:#8b5cf6;">
+    <div class="stat-label">Trainings</div>
+    <div class="stat-value">{{ my_trainings }}</div>
+    <div class="stat-sub">Currently enrolled</div>
+    <div class="stat-icon">🎓</div>
+  </div>
+  <div class="stat-card" style="--card-color:#10b981;">
+    <div class="stat-label">Last Net Salary</div>
+    <div class="stat-value" style="font-size:1.2rem;">
+      {% if last_payroll %}{{ current_user.currency_symbol }}{{ "%.0f"|format(last_payroll.net_salary or 0) }}{% else %}—{% endif %}
+    </div>
+    <div class="stat-sub">{% if last_payroll %}{{ last_payroll.month }} {{ last_payroll.year }}{% endif %}</div>
+    <div class="stat-icon">💰</div>
+  </div>
+</div>
+
+<!-- Quick Actions Row -->
+<div class="grid-4" style="margin-bottom:1.25rem;">
+  <a href="{{ url_for('my_leave') }}" style="text-decoration:none;">
+    <div class="card" style="text-align:center;padding:1.25rem .75rem;border-top:3px solid #F7941D;cursor:pointer;transition:.15s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+      <div style="font-size:2rem;margin-bottom:.5rem;">📋</div>
+      <div style="font-weight:700;font-size:.88rem;">Leave Application</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem;">Apply & track your leaves</div>
+    </div>
+  </a>
+  <a href="{{ url_for('my_attendance') }}" style="text-decoration:none;">
+    <div class="card" style="text-align:center;padding:1.25rem .75rem;border-top:3px solid #1565C0;cursor:pointer;transition:.15s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+      <div style="font-size:2rem;margin-bottom:.5rem;">✅</div>
+      <div style="font-weight:700;font-size:.88rem;">My Attendance</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem;">View monthly records</div>
+    </div>
+  </a>
+  <a href="{{ url_for('my_payslips') }}" style="text-decoration:none;">
+    <div class="card" style="text-align:center;padding:1.25rem .75rem;border-top:3px solid #2e7d32;cursor:pointer;transition:.15s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+      <div style="font-size:2rem;margin-bottom:.5rem;">💰</div>
+      <div style="font-weight:700;font-size:.88rem;">My Payslips</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem;">Salary & payment history</div>
+    </div>
+  </a>
+  <a href="{{ url_for('my_profile') }}" style="text-decoration:none;">
+    <div class="card" style="text-align:center;padding:1.25rem .75rem;border-top:3px solid #8b5cf6;cursor:pointer;transition:.15s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+      <div style="font-size:2rem;margin-bottom:.5rem;">👤</div>
+      <div style="font-weight:700;font-size:.88rem;">My Profile</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem;">Update info & password</div>
+    </div>
+  </a>
+</div>
+
+<div class="grid-2">
+  <!-- Today's Attendance Status -->
+  <div class="card">
+    <div class="card-header"><h3>📅 Today's Status — {{ today }}</h3></div>
+    <div class="card-body">
+      {% if today_attend %}
+        <div style="display:flex;align-items:center;gap:1rem;">
+          <div style="font-size:3rem;">
+            {% if today_attend.status=='present' %}✅{% elif today_attend.status=='absent' %}❌{% elif today_attend.status=='late' %}⚠️{% else %}🌓{% endif %}
+          </div>
+          <div>
+            <div style="font-size:1.2rem;font-weight:700;text-transform:capitalize;color:{% if today_attend.status=='present' %}var(--success){% elif today_attend.status=='absent' %}var(--danger){% else %}var(--warning){% endif %};">
+              {{ today_attend.status|title }}
+            </div>
+            <div style="font-size:.8rem;color:var(--muted);">
+              Time In: {{ today_attend.time_in or '—' }} &nbsp;|&nbsp; Time Out: {{ today_attend.time_out or '—' }}
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div style="text-align:center;padding:1rem;color:var(--muted);">
+          <div style="font-size:2rem;">📭</div>
+          <div style="font-size:.85rem;margin-top:.5rem;">Attendance not marked yet for today</div>
+          <div style="font-size:.75rem;margin-top:.25rem;">Contact HR if this is incorrect</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recent Leave Applications -->
+  <div class="card">
+    <div class="card-header">
+      <h3>📋 My Leave Applications</h3>
+      <a href="{{ url_for('my_leave') }}" class="btn btn-primary btn-xs">+ Apply Leave</a>
+    </div>
+    <div class="card-body p-0">
+      <table>
+        <thead><tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for l in recent_leaves %}
+          <tr>
+            <td>{{ l.leave_name }}</td>
+            <td>{{ l.from_date }}</td>
+            <td>{{ l.to_date }}</td>
+            <td>{{ l.total_days }}</td>
+            <td>
+              {% if l.status=='approved' %}<span class="badge badge-success">✓ Approved</span>
+              {% elif l.status=='rejected' %}<span class="badge badge-danger">✗ Rejected</span>
+              {% elif l.status=='cancelled' %}<span class="badge badge-secondary">Cancelled</span>
+              {% else %}<span class="badge badge-warning">⏳ Pending</span>{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-center text-muted" style="padding:1.25rem">No leave applications yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Upcoming Trainings -->
+  <div class="card">
+    <div class="card-header"><h3>🎓 My Trainings</h3><a href="{{ url_for('my_training') }}" class="btn btn-secondary btn-xs">View All</a></div>
+    <div class="card-body p-0">
+      <table>
+        <thead><tr><th>Program</th><th>Trainer</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for t in upcoming_training %}
+          <tr>
+            <td><strong>{{ t.title }}</strong><br><small class="text-muted">{{ t.category }}</small></td>
+            <td>{{ t.trainer }}</td>
+            <td>{{ t.start_date }}</td>
+            <td>{% if t.enroll_status=='completed' %}<span class="badge badge-success">Completed</span>{% else %}<span class="badge badge-info">Enrolled</span>{% endif %}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center text-muted" style="padding:1.25rem">No training programs</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Appraisals -->
+  <div class="card">
+    <div class="card-header"><h3>⭐ My Appraisals</h3><a href="{{ url_for('my_appraisals') }}" class="btn btn-secondary btn-xs">View All</a></div>
+    <div class="card-body p-0">
+      <table>
+        <thead><tr><th>Period</th><th>Score</th><th>Grade</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for a in appraisals %}
+          <tr>
+            <td>{{ a.period }}</td>
+            <td>{{ a.overall_score }}</td>
+            <td>
+              <span class="score-box score-{{ 'a' if a.grade in ['A+','A'] else 'b' if a.grade=='B' else 'c' if a.grade=='C' else 'd' }}">
+                {{ a.grade }}
+              </span>
+            </td>
+            <td>{% if a.status=='final' %}<span class="badge badge-success">Final</span>{% else %}<span class="badge badge-secondary">Draft</span>{% endif %}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center text-muted" style="padding:1.25rem">No appraisals yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

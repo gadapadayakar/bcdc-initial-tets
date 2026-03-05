@@ -1,0 +1,28 @@
+{% extends 'base.html' %}{% block title %}HR Report{% endblock %}{% block page_title %}HR Report{% endblock %}{% block content %}
+<div class="page-header"><div><h1>HR Report</h1></div><a href="{{ url_for('reports') }}" class="btn btn-secondary">← Back</a></div>
+<div class="card mb-4"><div class="card-header">
+  <form class="flex gap-2 items-center" method="GET">
+    <label class="form-label" style="margin:0;">Month:</label><input type="month" name="month" class="form-control" value="{{ month }}" style="width:160px;">
+    <button type="submit" class="btn btn-primary">Generate</button>
+  </form>
+</div></div>
+{% if payroll_summary %}
+<div class="stats-grid">
+  <div class="stat-card" style="--card-color:#8b5cf6;"><div class="stat-label">Total Payroll</div><div class="stat-value">{{ "%.0f"|format(payroll_summary.total_payroll or 0) }}</div></div>
+  <div class="stat-card" style="--card-color:#10b981;"><div class="stat-label">Paid</div><div class="stat-value">{{ payroll_summary.paid_count or 0 }}</div></div>
+  <div class="stat-card" style="--card-color:#2563eb;"><div class="stat-label">Total Records</div><div class="stat-value">{{ payroll_summary.count or 0 }}</div></div>
+</div>{% endif %}
+<div class="grid-2">
+<div class="card"><div class="card-header"><h3>Leave Summary</h3></div><div class="card-body p-0"><table>
+<thead><tr><th>Type</th><th>Applications</th><th>Approved</th><th>Total Days</th></tr></thead>
+<tbody>{% for r in leave_summary %}<tr>
+  <td>{{ r.name }}</td><td>{{ r.count }}</td><td>{{ r.approved }}</td><td>{{ r.total_days or 0 }}</td>
+</tr>{% else %}<tr><td colspan="4" class="text-center text-muted" style="padding:1rem">No data.</td></tr>{% endfor %}</tbody>
+</table></div></div>
+<div class="card"><div class="card-header"><h3>Attendance by Department</h3></div><div class="card-body p-0"><table>
+<thead><tr><th>Department</th><th>Present</th><th>Absent</th></tr></thead>
+<tbody>{% for r in dept_attendance %}<tr>
+  <td>{{ r.department_name }}</td><td><span class="badge badge-success">{{ r.present }}</span></td><td><span class="badge badge-danger">{{ r.absent }}</span></td>
+</tr>{% else %}<tr><td colspan="3" class="text-center text-muted" style="padding:1rem">No data.</td></tr>{% endfor %}</tbody>
+</table></div></div>
+</div>{% endblock %}

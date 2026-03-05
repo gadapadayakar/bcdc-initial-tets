@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Book Appointment{% endblock %}
+{% block page_title %}Book Appointment{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Book Appointment</h1></div><a href="{{ url_for('appointments') }}" class="btn btn-secondary">← Back</a></div>
+<div class="card"><div class="card-body">
+<form method="POST">
+  <div class="form-grid">
+    <div class="form-group"><label class="form-label">Patient *</label>
+      <select name="patient_id" class="form-control" required>
+        <option value="">Select Patient…</option>
+        {% for p in patients %}<option value="{{ p.id }}">{{ p.patient_name }} ({{ p.patient_unique_id }})</option>{% endfor %}
+      </select></div>
+    <div class="form-group"><label class="form-label">Doctor</label>
+      <select name="doctor_id" class="form-control">
+        <option value="">Select Doctor…</option>
+        {% for d in doctors %}<option value="{{ d.id }}">{{ d.name }} {{ d.surname }}</option>{% endfor %}
+      </select></div>
+    <div class="form-group"><label class="form-label">Department</label>
+      <select name="department_id" class="form-control">
+        <option value="">Select…</option>
+        {% for d in departments %}<option value="{{ d.id }}">{{ d.department_name }}</option>{% endfor %}
+      </select></div>
+    <div class="form-group"><label class="form-label">Date *</label><input type="date" name="appointment_date" class="form-control" value="{{ today }}" required></div>
+    <div class="form-group"><label class="form-label">Time *</label><input type="time" name="appointment_time" class="form-control" required></div>
+    <div class="form-group"><label class="form-label">Type</label>
+      <select name="type" class="form-control"><option value="opd">OPD</option><option value="ipd">IPD</option><option value="emergency">Emergency</option></select></div>
+    <div class="form-group"><label class="form-label">Priority</label>
+      <select name="priority" class="form-control"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
+  </div>
+  <div class="form-group mt-3"><label class="form-label">Symptoms / Reason</label><textarea name="symptoms" class="form-control"></textarea></div>
+  <div class="form-group mt-2"><label class="form-label">Note</label><textarea name="note" class="form-control" rows="2"></textarea></div>
+  <div class="mt-4 flex gap-2"><button type="submit" class="btn btn-primary">Book Appointment</button><a href="{{ url_for('appointments') }}" class="btn btn-secondary">Cancel</a></div>
+</form>
+</div></div>
+{% endblock %}

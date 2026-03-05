@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}My Payslips{% endblock %}
+{% block page_title %}My Payslips{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>💰 My Salary & Payslips</h1><div class="breadcrumb">My Portal / Payslips</div></div>
+  <a href="{{ url_for('my_portal') }}" class="btn btn-secondary">← My Portal</a>
+</div>
+
+{% if records %}
+<!-- Latest payslip highlighted -->
+{% set latest = records[0] %}
+<div style="background:linear-gradient(135deg,#F7941D,#e07d10);border-radius:.875rem;padding:1.5rem 2rem;margin-bottom:1.25rem;color:#fff;">
+  <div style="font-size:.8rem;opacity:.85;margin-bottom:.35rem;">Latest Payslip — {{ latest.month }} {{ latest.year }}</div>
+  <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center;">
+    <div>
+      <div style="font-size:.7rem;opacity:.75;">Basic Salary</div>
+      <div style="font-size:1.3rem;font-weight:700;">{{ current_user.currency_symbol }}{{ "%.2f"|format(latest.basic_salary or 0) }}</div>
+    </div>
+    <div style="font-size:1.5rem;opacity:.5;">+</div>
+    <div>
+      <div style="font-size:.7rem;opacity:.75;">Allowances</div>
+      <div style="font-size:1.3rem;font-weight:700;">{{ current_user.currency_symbol }}{{ "%.2f"|format(latest.allowances or 0) }}</div>
+    </div>
+    <div style="font-size:1.5rem;opacity:.5;">−</div>
+    <div>
+      <div style="font-size:.7rem;opacity:.75;">Deductions</div>
+      <div style="font-size:1.3rem;font-weight:700;">{{ current_user.currency_symbol }}{{ "%.2f"|format(latest.deductions or 0) }}</div>
+    </div>
+    <div style="font-size:1.5rem;opacity:.5;">=</div>
+    <div style="background:rgba(255,255,255,.2);border-radius:.5rem;padding:.5rem 1rem;">
+      <div style="font-size:.7rem;opacity:.75;">Net Salary</div>
+      <div style="font-size:1.75rem;font-weight:800;">{{ current_user.currency_symbol }}{{ "%.2f"|format(latest.net_salary or 0) }}</div>
+    </div>
+    <div style="margin-left:auto;">
+      {% if latest.payment_status=='paid' %}
+        <span style="background:rgba(255,255,255,.25);padding:.4rem 1rem;border-radius:.5rem;font-weight:700;font-size:.85rem;">✅ PAID</span>
+      {% else %}
+        <span style="background:rgba(255,0,0,.25);padding:.4rem 1rem;border-radius:.5rem;font-weight:700;font-size:.85rem;">⏳ PENDING</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header"><h3>📄 All Payslips</h3></div>
+  <div class="card-body p-0">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Month</th><th>Year</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net Salary</th><th>Payment Status</th><th>Payment Date</th></tr></thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td><strong>{{ r.month }}</strong></td>
+            <td>{{ r.year }}</td>
+            <td>{{ current_user.currency_symbol }}{{ "%.2f"|format(r.basic_salary or 0) }}</td>
+            <td style="color:var(--success);">+{{ current_user.currency_symbol }}{{ "%.2f"|format(r.allowances or 0) }}</td>
+            <td style="color:var(--danger);">-{{ current_user.currency_symbol }}{{ "%.2f"|format(r.deductions or 0) }}</td>
+            <td><strong style="font-size:1rem;">{{ current_user.currency_symbol }}{{ "%.2f"|format(r.net_salary or 0) }}</strong></td>
+            <td>
+              {% if r.payment_status=='paid' %}
+                <span class="badge badge-success">✅ Paid</span>
+              {% else %}
+                <span class="badge badge-warning">⏳ Pending</span>
+              {% endif %}
+            </td>
+            <td style="font-size:.78rem;color:var(--muted);">{{ r.payment_date or '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="text-center text-muted" style="padding:2rem;">
+            No payslip records found.<br><small>Contact HR / Accounts department.</small>
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

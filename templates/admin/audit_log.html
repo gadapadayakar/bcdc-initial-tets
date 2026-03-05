@@ -1,0 +1,20 @@
+{% extends 'base.html' %}{% block title %}Audit Log{% endblock %}{% block page_title %}Audit Log{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Audit Log</h1><div class="breadcrumb">Admin / Audit Trail</div></div></div>
+<div class="card"><div class="card-header"><h3>All System Activity</h3>
+  <div class="flex gap-2"><span class="badge badge-info">Page {{ page }}</span>
+    {% if page > 1 %}<a href="?page={{ page-1 }}" class="btn btn-secondary btn-xs">← Prev</a>{% endif %}
+    {% if page * per_page < total %}<a href="?page={{ page+1 }}" class="btn btn-secondary btn-xs">Next →</a>{% endif %}
+  </div>
+</div>
+<div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Time</th><th>User</th><th>Module</th><th>Action</th><th>Record ID</th><th>Details</th><th>IP</th></tr></thead>
+<tbody>{% for l in logs %}<tr>
+  <td style="font-size:.75rem;white-space:nowrap;">{{ l.created_at[:16] }}</td>
+  <td>{{ l.user_name }}</td>
+  <td><span class="badge badge-info">{{ l.module }}</span></td>
+  <td><span class="badge badge-secondary">{{ l.action }}</span></td>
+  <td>{{ l.record_id or '—' }}</td>
+  <td style="font-size:.78rem;max-width:250px;">{{ l.details or '—' }}</td>
+  <td style="font-size:.72rem;color:var(--muted);">{{ l.ip_address }}</td>
+</tr>{% else %}<tr><td colspan="7" class="text-center text-muted" style="padding:2rem">No audit entries.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

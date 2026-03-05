@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Stock Batches{% endblock %}
+{% block page_title %}Stock Batches{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ med.medicine_name }}</h1>
+    <div class="breadcrumb">Pharmacy / Inventory / Batches</div>
+  </div>
+  <a href="{{ url_for('pharmacy_list') }}" class="btn btn-secondary">← Back to Inventory</a>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><h3>Add New Batch / Restock</h3></div>
+    <div class="card-body">
+      <form method="POST">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Batch Number *</label>
+            <input type="text" name="batch_no" class="form-control" required placeholder="e.g. BCH2025001">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Manufacture Date</label>
+            <input type="date" name="manufacture_date" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Expiry Date *</label>
+            <input type="date" name="expiry_date" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Purchase Price</label>
+            <input type="number" name="purchase_price" class="form-control" step="0.01" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sale Price</label>
+            <input type="number" name="sale_price" class="form-control" step="0.01" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Quantity *</label>
+            <input type="number" name="quantity" class="form-control" required value="0">
+          </div>
+        </div>
+        <div class="mt-4"><button type="submit" class="btn btn-primary">Add Batch</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>Existing Batches</h3>
+      <span class="badge badge-info">Total: {{ batches|sum(attribute='available_quantity') }} units</span>
+    </div>
+    <div class="card-body p-0">
+      <table>
+        <thead>
+          <tr><th>Batch</th><th>Mfg</th><th>Expiry</th><th>Buy₹</th><th>Sale₹</th><th>Qty</th></tr>
+        </thead>
+        <tbody>
+        {% for b in batches %}
+        <tr>
+          <td><strong>{{ b.batch_no }}</strong></td>
+          <td style="font-size:.75rem;">{{ b.manufacture_date or '—' }}</td>
+          <td style="font-size:.75rem;">
+            {% if b.expiry_date and b.expiry_date <= today %}
+              <span style="color:#ef4444;font-weight:700;">⚠ {{ b.expiry_date }}</span>
+            {% else %}{{ b.expiry_date or '—' }}{% endif %}
+          </td>
+          <td>{{ '%.2f'|format(b.purchase_price) }}</td>
+          <td>{{ '%.2f'|format(b.sale_price) }}</td>
+          <td>
+            {% if b.available_quantity > 10 %}
+              <span class="badge badge-success">{{ b.available_quantity }}</span>
+            {% elif b.available_quantity > 0 %}
+              <span class="badge badge-warning">{{ b.available_quantity }}</span>
+            {% else %}
+              <span class="badge badge-danger">0</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-center text-muted" style="padding:1.5rem">No batches yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

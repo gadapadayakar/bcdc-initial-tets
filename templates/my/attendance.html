@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}My Attendance{% endblock %}
+{% block page_title %}My Attendance{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>✅ My Attendance Record</h1><div class="breadcrumb">My Portal / Attendance</div></div>
+  <a href="{{ url_for('my_portal') }}" class="btn btn-secondary">← My Portal</a>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header">
+    <form class="flex gap-2 items-center" method="GET">
+      <label class="form-label" style="margin:0;white-space:nowrap;">Select Month:</label>
+      <input type="month" name="month" class="form-control" value="{{ month }}" style="width:180px;">
+      <button type="submit" class="btn btn-primary">View</button>
+    </form>
+  </div>
+</div>
+
+<!-- Stats for month -->
+<div class="stats-grid">
+  <div class="stat-card" style="--card-color:#2e7d32;">
+    <div class="stat-label">Present</div>
+    <div class="stat-value">{{ stats.present }}</div>
+    <div class="stat-sub">days</div>
+    <div class="stat-icon">✅</div>
+  </div>
+  <div class="stat-card" style="--card-color:#c62828;">
+    <div class="stat-label">Absent</div>
+    <div class="stat-value">{{ stats.absent }}</div>
+    <div class="stat-sub">days</div>
+    <div class="stat-icon">❌</div>
+  </div>
+  <div class="stat-card" style="--card-color:#e65100;">
+    <div class="stat-label">Late</div>
+    <div class="stat-value">{{ stats.late }}</div>
+    <div class="stat-sub">days</div>
+    <div class="stat-icon">⏰</div>
+  </div>
+  <div class="stat-card" style="--card-color:#0277bd;">
+    <div class="stat-label">Half Day</div>
+    <div class="stat-value">{{ stats.half_day }}</div>
+    <div class="stat-sub">days</div>
+    <div class="stat-icon">🌓</div>
+  </div>
+  <div class="stat-card" style="--card-color:{% if stats.pct >= 90 %}#2e7d32{% elif stats.pct >= 70 %}#e65100{% else %}#c62828{% endif %};">
+    <div class="stat-label">Attendance %</div>
+    <div class="stat-value">{{ stats.pct }}%</div>
+    <div class="stat-sub">{{ stats.total }} days marked</div>
+    <div class="stat-icon">📊</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h3>📅 Daily Records — {{ month }}</h3></div>
+  <div class="card-body p-0">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Day</th><th>Status</th><th>Time In</th><th>Time Out</th><th>Hours</th><th>Note</th></tr></thead>
+        <tbody>
+          {% for r in records %}
+          {% set day_name = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}
+          <tr>
+            <td><strong>{{ r.date }}</strong></td>
+            <td style="color:var(--muted);font-size:.75rem;">
+              {% if r.date %}{{ ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][r.date|string|truncate(10,false,'')|strptime('%Y-%m-%d')|attr('weekday')] if false else '' }}{% endif %}
+            </td>
+            <td>
+              {% if r.status=='present' %}<span class="badge badge-success">✅ Present</span>
+              {% elif r.status=='absent' %}<span class="badge badge-danger">❌ Absent</span>
+              {% elif r.status=='late' %}<span class="badge badge-warning">⏰ Late</span>
+              {% elif r.status=='half_day' %}<span class="badge badge-info">🌓 Half Day</span>
+              {% else %}<span class="badge badge-secondary">{{ r.status|title }}</span>{% endif %}
+            </td>
+            <td>{{ r.time_in or '—' }}</td>
+            <td>{{ r.time_out or '—' }}</td>
+            <td style="font-size:.75rem;color:var(--muted);">
+              {% if r.time_in and r.time_out %}
+                {% set tin = r.time_in.split(':') %}
+                {% set tout = r.time_out.split(':') %}
+                {{ ((tout[0]|int - tin[0]|int)*60 + (tout[1]|int - tin[1]|int)) // 60 }}h {{ ((tout[0]|int - tin[0]|int)*60 + (tout[1]|int - tin[1]|int)) % 60 }}m
+              {% else %}—{% endif %}
+            </td>
+            <td style="font-size:.75rem;color:var(--muted);">{{ r.note or '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="text-center text-muted" style="padding:2rem;">
+            No attendance records for {{ month }}.<br>
+            <small>Contact HR if your attendance is missing.</small>
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'base.html' %}{% block title %}Pharmacy{% endblock %}{% block page_title %}Medicine Stock{% endblock %}{% block content %}
+<div class="page-header">
+  <div><h1>Medicine Stock</h1></div>
+  <div class="flex gap-2">
+    {% if user_perms.get('pharmacy',{}).get('add') %}
+    <a href="{{ url_for('pharmacy_dispense') }}" class="btn btn-success">💉 Dispense to Patient</a>
+    <a href="{{ url_for('pharmacy_add') }}" class="btn btn-primary">+ Add Medicine</a>
+    {% endif %}
+  </div>
+</div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Medicine</th><th>Category</th><th>Company</th><th>Composition</th><th>Unit</th><th>Stock</th><th>Sale Price</th><th>Expiry</th><th>Actions</th></tr></thead>
+<tbody>{% for m in medicines %}<tr>
+  <td><strong>{{ m.medicine_name }}</strong></td>
+  <td><span class="badge badge-info">{{ m.medicine_category }}</span></td>
+  <td>{{ m.medicine_company }}</td>
+  <td style="font-size:.72rem;color:var(--muted);">{{ (m.medicine_composition or '')[:30] }}</td>
+  <td>{{ m.unit }}</td>
+  <td>
+    {% if m.total_qty|int == 0 %}<span class="badge badge-danger">Out of Stock</span>
+    {% elif m.total_qty|int <= m.reorder_level|int %}<span class="badge badge-warning">Low: {{ m.total_qty }}</span>
+    {% else %}<span class="badge badge-success">{{ m.total_qty }}</span>{% endif %}
+  </td>
+  <td>{{ current_user.currency_symbol }}{{ "%.2f"|format(m.sale_price or 0) }}</td>
+  <td>{% if m.nearest_expiry and m.nearest_expiry <= today_plus30 %}<span style="color:var(--danger);font-weight:700;">⚠ {{ m.nearest_expiry }}</span>
+    {% else %}{{ m.nearest_expiry or '—' }}{% endif %}</td>
+  <td>
+    {% if user_perms.get('pharmacy',{}).get('add') %}<a href="{{ url_for('pharmacy_stock_in',mid=m.id) }}" class="btn btn-info btn-xs">+Stock</a>{% endif %}
+    {% if user_perms.get('pharmacy',{}).get('edit') %}<a href="{{ url_for('pharmacy_edit',mid=m.id) }}" class="btn btn-secondary btn-xs">Edit</a>{% endif %}
+    {% if user_perms.get('pharmacy',{}).get('add') %}<a href="{{ url_for('pharmacy_dispense') }}?medicine={{ m.id }}" class="btn btn-success btn-xs">Dispense</a>{% endif %}
+    {% if user_perms.get('pharmacy',{}).get('delete') %}<form method="POST" action="{{ url_for('pharmacy_delete',mid=m.id) }}" style="display:inline" onsubmit="return confirm('Delete medicine?')"><button class="btn btn-danger btn-xs">Del</button></form>{% endif %}
+  </td>
+</tr>{% else %}<tr><td colspan="9" class="text-center text-muted" style="padding:2rem">No medicines in stock.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

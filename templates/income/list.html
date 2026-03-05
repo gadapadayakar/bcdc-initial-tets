@@ -1,0 +1,19 @@
+{% extends 'base.html' %}{% block title %}Income{% endblock %}{% block page_title %}Income Records{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Income</h1></div>{% if user_perms.get('income',{}).get('add') %}<a href="{{ url_for('income_add') }}" class="btn btn-primary">+ Add Income</a>{% endif %}</div>
+<div class="card"><div class="card-header">
+  <form class="flex gap-2 items-center" method="GET">
+    <label class="form-label" style="margin:0;white-space:nowrap;">From:</label><input type="date" name="start" class="form-control" value="{{ start }}" style="width:150px;">
+    <label class="form-label" style="margin:0;">To:</label><input type="date" name="end" class="form-control" value="{{ end }}" style="width:150px;">
+    <button type="submit" class="btn btn-secondary">Filter</button>
+  </form>
+  <div class="flex items-center gap-2"><span class="text-muted text-sm">Total:</span><strong style="font-size:1.1rem;color:#10b981;">{{ current_user.currency_symbol }}{{ "%.2f"|format(total) }}</strong></div>
+</div>
+<div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Name</th><th>Category</th><th>Invoice No</th><th>Amount</th><th>Date</th><th>Note</th><th>Actions</th></tr></thead>
+<tbody>{% for r in records %}<tr>
+  <td>{{ r.name }}</td><td>{{ r.income_category }}</td><td>{{ r.invoice_no or '—' }}</td>
+  <td><strong>{{ current_user.currency_symbol }}{{ "%.2f"|format(r.amount) }}</strong></td><td>{{ r.date }}</td>
+  <td>{{ (r.note or '')[:40] }}</td>
+  <td>{% if user_perms.get('income',{}).get('delete') %}<form method="POST" action="{{ url_for('income_delete',iid=r.id) }}" style="display:inline" onsubmit="return confirm('Delete?')"><button class="btn btn-danger btn-xs">Del</button></form>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="7" class="text-center text-muted" style="padding:2rem">No records.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

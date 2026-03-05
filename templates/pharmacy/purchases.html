@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% block title %}Purchase Log{% endblock %}{% block page_title %}Medicine Purchase Log{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Purchase / Stock-In Log</h1></div></div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Medicine</th><th>Supplier</th><th>Invoice</th><th>Batch</th><th>Date</th><th>Qty</th><th>Purchase Price</th><th>Sale Price</th><th>Total Cost</th></tr></thead>
+<tbody>{% for r in records %}<tr>
+  <td><strong>{{ r.medicine_name }}</strong></td>
+  <td>{{ r.supplier_name or '—' }}</td>
+  <td>{{ r.invoice_no or '—' }}</td>
+  <td>{{ r.batch_no or '—' }}</td>
+  <td>{{ r.purchase_date }}</td>
+  <td>{{ r.quantity }}</td>
+  <td>{{ current_user.currency_symbol }}{{ "%.2f"|format(r.purchase_price or 0) }}</td>
+  <td>{{ current_user.currency_symbol }}{{ "%.2f"|format(r.sale_price or 0) }}</td>
+  <td><strong>{{ current_user.currency_symbol }}{{ "%.2f"|format(r.total_cost or 0) }}</strong></td>
+</tr>{% else %}<tr><td colspan="9" class="text-center text-muted" style="padding:2rem">No purchase records.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

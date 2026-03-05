@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Add Bed{% endblock %}
+{% block page_title %}Add Bed{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>🛏 Add New Bed</h1><div class="breadcrumb">Bed Management / Add</div></div>
+  <a href="{{ url_for('beds') }}" class="btn btn-secondary">← Back to Beds</a>
+</div>
+<div class="card" style="max-width:600px;">
+  <div class="card-header"><h3>Bed Details</h3></div>
+  <div class="card-body">
+    <form method="POST">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Bed Name / Number *</label>
+          <input type="text" name="bed_name" class="form-control" placeholder="e.g. B001, ICU-01" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bed Type *</label>
+          <select name="bed_type_id" class="form-control" required>
+            <option value="">— Select Type —</option>
+            {% for bt in bed_types %}
+            <option value="{{ bt.id }}">{{ bt.type_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ward / Group *</label>
+          <select name="bed_group_id" class="form-control" required>
+            <option value="">— Select Ward —</option>
+            {% for bg in bed_groups %}
+            <option value="{{ bg.id }}">{{ bg.group_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Charge Per Day (₹)</label>
+          <input type="number" name="charge_per_day" class="form-control" min="0" step="0.01" placeholder="0.00">
+        </div>
+      </div>
+      <div class="form-group mt-3">
+        <label class="form-label">Description / Notes</label>
+        <textarea name="description" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">➕ Add Bed</button>
+        <a href="{{ url_for('beds') }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

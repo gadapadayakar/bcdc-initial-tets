@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% block title %}Training Details{% endblock %}{% block page_title %}Training Details{% endblock %}{% block content %}
+<div class="page-header"><div><h1>{{ training.title }}</h1><div class="breadcrumb"><a href="{{ url_for('hr_training') }}">Training</a> / Details</div></div><a href="{{ url_for('hr_training') }}" class="btn btn-secondary">← Back</a></div>
+<div class="grid-2">
+<div class="card"><div class="card-header"><h3>Program Information</h3></div><div class="card-body">
+  <table style="width:100%;font-size:.85rem;">
+    {% for label,val in [('Category',training.category),('Trainer',training.trainer),('Start Date',training.start_date),('End Date',training.end_date),('Duration',training.duration_hours|string+' hours'),('Location',training.location),('Description',training.description)] %}
+    <tr><td style="padding:.4rem 0;color:var(--muted);width:40%;font-size:.75rem;font-weight:600;text-transform:uppercase;">{{ label }}</td><td>{{ val or '—' }}</td></tr>{% endfor %}
+  </table>
+</div></div>
+<div class="card"><div class="card-header"><h3>Participants ({{ participants|length }})</h3></div><div class="card-body p-0">
+  <table><thead><tr><th>Emp ID</th><th>Name</th><th>Status</th><th>Score</th><th>Certificate</th><th>Actions</th></tr></thead>
+  <tbody>{% for p in participants %}<tr>
+    <td>{{ p.employee_id }}</td><td>{{ p.name }} {{ p.surname }}</td>
+    <td>{% if p.status=='completed' %}<span class="badge badge-success">Completed</span>{% else %}<span class="badge badge-info">Enrolled</span>{% endif %}</td>
+    <td>{{ p.score or '—' }}</td>
+    <td>{% if p.certificate_issued %}<span class="badge badge-success">✓ Issued</span>{% else %}—{% endif %}</td>
+    <td>
+      {% if p.status!='completed' and user_perms.get('hr_training',{}).get('edit') %}
+      <button class="btn btn-success btn-xs" onclick="markDone({{ training.id }},{{ p.staff_id }})">Mark Done</button>{% endif %}
+    </td>
+  </tr>{% else %}<tr><td colspan="6" class="text-center text-muted" style="padding:1rem">No participants.</td></tr>{% endfor %}</tbody>
+  </table>
+</div></div>
+</div>
+<div id="doneModal" class="modal-bg"><div class="modal"><h3>Mark Training Completed</h3>
+  <form id="doneForm" method="POST">
+    <div class="form-group"><label class="form-label">Score (0–100)</label><input type="number" name="score" class="form-control" min="0" max="100" value="80"></div>
+    <div class="form-group mt-2"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;"><input type="checkbox" name="certificate" value="1"> Issue Certificate</label></div>
+    <div class="mt-4 flex gap-2"><button type="submit" class="btn btn-success">Save</button><button type="button" class="btn btn-secondary" onclick="document.getElementById('doneModal').classList.remove('show')">Cancel</button></div>
+  </form>
+</div></div>
+{% endblock %}
+{% block extra_js %}<script>function markDone(tid,pid){document.getElementById('doneForm').action='/hr/training/'+tid+'/complete/'+pid;document.getElementById('doneModal').classList.add('show');}</script>{% endblock %}

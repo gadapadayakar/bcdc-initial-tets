@@ -1,0 +1,30 @@
+{% extends 'base.html' %}{% block title %}Stock In{% endblock %}{% block page_title %}Stock In / Purchase{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Add Stock: {{ med.medicine_name }}</h1></div><a href="{{ url_for('pharmacy_list') }}" class="btn btn-secondary">← Back</a></div>
+<div class="card mb-3"><div class="card-body">
+  <p><strong>Company:</strong> {{ med.medicine_company }} &nbsp;|&nbsp; <strong>Unit:</strong> {{ med.unit }} &nbsp;|&nbsp; <strong>Composition:</strong> {{ med.medicine_composition }}</p>
+</div></div>
+<div class="card"><div class="card-body"><form method="POST">
+  <div class="form-section">Purchase / Stock Details</div>
+  <div class="form-grid">
+    <div class="form-group"><label class="form-label">Supplier Name</label><input type="text" name="supplier_name" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Invoice No</label><input type="text" name="invoice_no" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Purchase Date</label><input type="date" name="purchase_date" class="form-control" value="{{ today }}"></div>
+    <div class="form-group"><label class="form-label">Batch Number</label><input type="text" name="batch_no" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Manufacture Date</label><input type="date" name="manufacture_date" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Expiry Date *</label><input type="date" name="expiry_date" class="form-control" required></div>
+    <div class="form-group"><label class="form-label">Purchase Price (per unit)</label><input type="number" name="purchase_price" class="form-control" step="0.01" value="0" id="pp" oninput="calcTotal()"></div>
+    <div class="form-group"><label class="form-label">Sale Price (per unit)</label><input type="number" name="sale_price" class="form-control" step="0.01" value="0"></div>
+    <div class="form-group"><label class="form-label">Quantity *</label><input type="number" name="quantity" class="form-control" value="1" min="1" required id="qty" oninput="calcTotal()"></div>
+    <div class="form-group"><label class="form-label">Total Cost (Auto)</label><input type="text" id="total_cost" class="form-control" readonly style="background:#f8fafc;font-weight:700;"></div>
+  </div>
+  <div class="form-group mt-3"><label class="form-label">Note</label><textarea name="note" class="form-control" rows="2"></textarea></div>
+  <div class="mt-4 flex gap-2"><button type="submit" class="btn btn-success">Add to Stock</button><a href="{{ url_for('pharmacy_list') }}" class="btn btn-secondary">Cancel</a></div>
+</form></div></div>{% endblock %}
+{% block extra_js %}<script>
+function calcTotal(){
+  const pp=parseFloat(document.getElementById('pp').value)||0;
+  const qty=parseInt(document.getElementById('qty').value)||0;
+  document.getElementById('total_cost').value='$'+(pp*qty).toFixed(2);
+}
+calcTotal();
+</script>{% endblock %}

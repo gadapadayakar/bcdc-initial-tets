@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% block title %}Staff Profile{% endblock %}{% block page_title %}Staff Profile{% endblock %}{% block content %}
+<div class="page-header"><div><h1>{{ member.name }} {{ member.surname }}</h1><div class="breadcrumb"><a href="{{ url_for('staff_list') }}">Staff</a> / {{ member.employee_id }}</div></div>
+  <div class="flex gap-2">{% if user_perms.get('staff',{}).get('edit') %}<a href="{{ url_for('staff_edit',sid=member.id) }}" class="btn btn-warning">Edit</a>{% endif %}<a href="{{ url_for('staff_list') }}" class="btn btn-secondary">← Back</a></div>
+</div>
+<div class="grid-2">
+<div class="card"><div class="card-header"><h3>Staff Information</h3></div><div class="card-body">
+  <table style="width:100%;font-size:.85rem;">
+    {% for label,val in [('Emp ID',member.employee_id),('Name',member.name+' '+member.surname),('Role',member.role_name),('Department',member.department_name),('Designation',member.designation_name),('Email',member.email),('Mobile',member.mobileno),('Phone',member.phone),('Gender',member.gender),('DOB',member.dob),('Blood Group',member.blood_group),('Joining Date',member.date_of_joining),('Basic Salary',member.basic_salary),('Bank',member.bank_name),('Account',member.bank_account),('Emergency',member.emergency_contact)] %}
+    <tr><td style="padding:.35rem 0;color:var(--muted);width:40%;font-size:.75rem;font-weight:600;text-transform:uppercase;">{{ label }}</td><td>{{ val or '—' }}</td></tr>{% endfor %}
+  </table>
+</div></div>
+<div>
+  <div class="card"><div class="card-header"><h3>Recent Attendance</h3></div><div class="card-body p-0">
+    <table><thead><tr><th>Date</th><th>In</th><th>Out</th><th>Status</th></tr></thead>
+    <tbody>{% for a in attendance[:7] %}<tr><td>{{ a.date }}</td><td>{{ a.time_in }}</td><td>{{ a.time_out }}</td>
+    <td>{% if a.status=='present' %}<span class="badge badge-success">Present</span>{% elif a.status=='absent' %}<span class="badge badge-danger">Absent</span>{% elif a.status=='late' %}<span class="badge badge-warning">Late</span>{% else %}<span class="badge badge-secondary">{{ a.status }}</span>{% endif %}</td>
+    </tr>{% else %}<tr><td colspan="4" class="text-center text-muted" style="padding:1rem">No attendance</td></tr>{% endfor %}</tbody></table>
+  </div></div>
+  <div class="card"><div class="card-header"><h3>Leave History</h3></div><div class="card-body p-0">
+    <table><thead><tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th></tr></thead>
+    <tbody>{% for l in leaves %}<tr><td>{{ l.leave_name }}</td><td>{{ l.from_date }}</td><td>{{ l.to_date }}</td><td>{{ l.total_days }}</td>
+    <td>{% if l.status=='approved' %}<span class="badge badge-success">Approved</span>{% elif l.status=='rejected' %}<span class="badge badge-danger">Rejected</span>{% else %}<span class="badge badge-warning">Pending</span>{% endif %}</td>
+    </tr>{% else %}<tr><td colspan="5" class="text-center text-muted" style="padding:1rem">No leaves</td></tr>{% endfor %}</tbody></table>
+  </div></div>
+  <div class="card"><div class="card-header"><h3>Training Programs</h3></div><div class="card-body p-0">
+    <table><thead><tr><th>Training</th><th>Status</th><th>Score</th><th>Certificate</th></tr></thead>
+    <tbody>{% for t in trainings %}<tr><td>{{ t.title }}</td>
+    <td>{% if t.enroll_status=='completed' %}<span class="badge badge-success">Completed</span>{% else %}<span class="badge badge-info">Enrolled</span>{% endif %}</td>
+    <td>{{ t.score or "—" }}</td><td>{% if t.certificate_issued %}<span class="badge badge-success">✓ Issued</span>{% else %}—{% endif %}</td>
+    </tr>{% else %}<tr><td colspan="4" class="text-center text-muted" style="padding:1rem">No training</td></tr>{% endfor %}</tbody></table>
+  </div></div>
+</div>
+</div>{% endblock %}

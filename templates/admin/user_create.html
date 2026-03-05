@@ -1,0 +1,99 @@
+{% extends 'base.html' %}{% block title %}Create User{% endblock %}{% block page_title %}Create New User{% endblock %}
+{% block extra_css %}<style>
+.perm-preview{max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:.5rem;padding:.75rem;background:#f8fafc;}
+.perm-row{display:flex;align-items:center;justify-content:space-between;padding:.3rem 0;border-bottom:1px solid var(--border);font-size:.78rem;}
+.perm-row:last-child{border-bottom:none;}
+.perm-badges{display:flex;gap:.25rem;}
+</style>{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>➕ Create New System User</h1><div class="breadcrumb">Admin / User Management / Create</div></div><a href="{{ url_for('admin_users') }}" class="btn btn-secondary">← Back</a></div>
+<div class="alert alert-info">Creating a user here will also set their login email and password. They can use their Employee ID OR email to log in.</div>
+<div class="grid-2">
+<div class="card"><div class="card-body"><form method="POST" id="createForm">
+  <div class="form-section">Personal Information</div>
+  <div class="form-grid">
+    <div class="form-group"><label class="form-label">First Name *</label><input type="text" name="name" class="form-control" required placeholder="First name"></div>
+    <div class="form-group"><label class="form-label">Last Name</label><input type="text" name="surname" class="form-control" placeholder="Last name"></div>
+    <div class="form-group"><label class="form-label">Gender</label>
+      <select name="gender" class="form-control"><option>Male</option><option>Female</option><option>Other</option></select></div>
+    <div class="form-group"><label class="form-label">Phone</label><input type="text" name="phone" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Department</label>
+      <select name="department" class="form-control"><option value="0">Select...</option>{% for d in departments %}<option value="{{ d.id }}">{{ d.department_name }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label">Basic Salary</label><input type="number" name="basic_salary" class="form-control" value="0" step="0.01"></div>
+  </div>
+  <div class="form-section">Login Credentials</div>
+  <div class="form-grid">
+    <div class="form-group"><label class="form-label">Employee ID (auto if blank)</label><input type="text" name="employee_id" class="form-control" placeholder="e.g. EMP009"></div>
+    <div class="form-group"><label class="form-label">Email Address *</label><input type="email" name="email" class="form-control" required placeholder="user@hospital.com"></div>
+    <div class="form-group"><label class="form-label">Password *</label><input type="text" name="password" class="form-control" value="admin@123" required></div>
+  </div>
+  <div class="form-section">Role & Module Access</div>
+  <div class="form-group mb-3">
+    <label class="form-label">Assign Role *</label>
+    <select name="role_id" class="form-control" required id="roleSelect" onchange="showRolePerms(this.value)">
+      <option value="">— Select role —</option>
+      {% for r in roles %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}
+    </select>
+    <small class="text-muted" style="font-size:.7rem;margin-top:.25rem;">Role determines which modules this user can access.</small>
+  </div>
+
+  <div id="rolePermsPreview" style="display:none;margin-bottom:1rem;">
+    <div class="form-label mb-1">Permissions from this role:</div>
+    <div class="perm-preview" id="permList"></div>
+  </div>
+
+  <div class="mt-4 flex gap-2">
+    <button type="submit" class="btn btn-primary" style="min-width:160px;">✅ Create User & Set Login</button>
+    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form></div></div>
+
+<div class="card">
+  <div class="card-header"><h3>ℹ️ Available Roles & Their Access</h3></div>
+  <div class="card-body p-0"><table>
+    <thead><tr><th>Role</th><th>Key Permissions</th></tr></thead>
+    <tbody>
+      {% for r in roles %}
+      <tr>
+        <td><span class="badge badge-purple">{{ r.name }}</span></td>
+        <td style="font-size:.72rem;">
+          {% set rperms = namespace(mods=[]) %}
+          {% for m in modules %}
+            {% if role_perms_json %}
+              {% set rp = (role_perms_json | fromjson).get(r.id|string, {}).get(m, {}) %}
+              {% if rp.get('view') %}{% set _ = rperms.mods.append(m.replace('hr_','').replace('_',' ').title()) %}{% endif %}
+            {% endif %}
+          {% endfor %}
+          {{ rperms.mods[:6]|join(', ') }}{% if rperms.mods|length > 6 %} + {{ rperms.mods|length - 6 }} more{% endif %}
+        </td>
+      </tr>{% endfor %}
+    </tbody>
+  </table></div>
+</div>
+</div>
+
+<script>
+const rolePerms = {{ role_perms_json }};
+const modules = {{ modules | tojson }};
+function showRolePerms(roleId){
+  const preview = document.getElementById('rolePermsPreview');
+  const list = document.getElementById('permList');
+  if(!roleId){ preview.style.display='none'; return; }
+  const rp = rolePerms[roleId] || {};
+  preview.style.display='block';
+  list.innerHTML = modules.map(m=>{
+    const p = rp[m]||{};
+    const hasPerm = p.view||p.add||p.edit||p.delete;
+    if(!hasPerm) return '';
+    const badges = [
+      p.view?'<span class="badge badge-info" style="font-size:.6rem;">View</span>':'',
+      p.add?'<span class="badge badge-success" style="font-size:.6rem;">Add</span>':'',
+      p.edit?'<span class="badge badge-warning" style="font-size:.6rem;">Edit</span>':'',
+      p.delete?'<span class="badge badge-danger" style="font-size:.6rem;">Del</span>':''
+    ].filter(Boolean).join('');
+    const label = m.replace('hr_','HR: ').replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase());
+    return `<div class="perm-row"><span style="font-weight:600;">${label}</span><div class="perm-badges">${badges}</div></div>`;
+  }).filter(Boolean).join('') || '<div class="text-muted" style="padding:.5rem">No permissions configured for this role.</div>';
+}
+</script>
+{% endblock %}

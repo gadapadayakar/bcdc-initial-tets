@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% block title %}Staff{% endblock %}{% block page_title %}Staff Management{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Staff Members</h1></div>{% if user_perms.get('staff',{}).get('add') %}<a href="{{ url_for('staff_add') }}" class="btn btn-primary">+ Add Staff</a>{% endif %}</div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Emp ID</th><th>Name</th><th>Role</th><th>Department</th><th>Designation</th><th>Email</th><th>Mobile</th><th>Actions</th></tr></thead>
+<tbody>{% for s in staff_list %}<tr>
+  <td><strong>{{ s.employee_id or "—" }}</strong></td>
+  <td><a href="{{ url_for('staff_view',sid=s.id) }}">{{ s.name }} {{ s.surname }}</a></td>
+  <td><span class="badge badge-purple">{{ s.role_name or "Staff" }}</span></td>
+  <td>{{ s.department_name or "—" }}</td><td>{{ s.designation_name or "—" }}</td>
+  <td>{{ s.email }}</td><td>{{ s.mobileno or s.phone or "—" }}</td>
+  <td>
+    <a href="{{ url_for('staff_view',sid=s.id) }}" class="btn btn-secondary btn-xs">View</a>
+    {% if user_perms.get('staff',{}).get('edit') %}<a href="{{ url_for('staff_edit',sid=s.id) }}" class="btn btn-warning btn-xs">Edit</a>{% endif %}
+    {% if user_perms.get('staff',{}).get('delete') and s.id != current_user.id %}<form method="POST" action="{{ url_for('staff_delete',sid=s.id) }}" style="display:inline" onsubmit="return confirm('Deactivate?')"><button class="btn btn-danger btn-xs">Deact.</button></form>{% endif %}
+  </td>
+</tr>{% else %}<tr><td colspan="8" class="text-center text-muted" style="padding:2rem">No staff found.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

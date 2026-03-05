@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Attendance{% endblock %}
+{% block page_title %}Attendance{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Daily Attendance</h1></div>
+  <a href="{{ url_for('hr_attendance_report') }}" class="btn btn-secondary">Monthly Report</a>
+</div>
+<div class="card mb-3"><div class="card-body">
+  <form method="GET" class="flex gap-2 items-center">
+    <label class="form-label" style="margin:0;">Date:</label>
+    <input type="date" name="date" class="form-control" value="{{ date_filter }}" style="width:180px;">
+    <button type="submit" class="btn btn-primary">Load Attendance</button>
+  </form>
+</div></div>
+<div class="card"><div class="card-body">
+<form method="POST" action="{{ url_for('hr_attendance_mark') }}">
+  <input type="hidden" name="date" value="{{ date_filter }}">
+  <div class="table-wrap"><table>
+  <thead><tr><th>Emp ID</th><th>Name</th><th>Status</th><th>Time In</th><th>Time Out</th></tr></thead>
+  <tbody>
+  {% for s in all_staff %}
+  {% set rec = records|selectattr('staff_id','equalto',s.id)|first %}
+  <tr>
+    <td>{{ s.employee_id }}</td>
+    <td>{{ s.name }} {{ s.surname }}</td>
+    <td>
+      <input type="hidden" name="staff_id" value="{{ s.id }}">
+      <select name="status" class="form-control" style="width:130px;">
+        {% for st in ['present','absent','late','half_day','holiday'] %}
+        <option value="{{ st }}" {% if rec and rec['status']==st %}selected{% endif %}>{{ st.replace('_',' ').title() }}</option>
+        {% endfor %}
+      </select>
+    </td>
+    <td><input type="time" name="time_in_{{ s.id }}" class="form-control" style="width:120px;" value="{{ rec['time_in'] if rec else '09:00' }}"></td>
+    <td><input type="time" name="time_out_{{ s.id }}" class="form-control" style="width:120px;" value="{{ rec['time_out'] if rec else '17:00' }}"></td>
+  </tr>
+  {% endfor %}
+  </tbody></table></div>
+  {% if user_perms.get('hr_attendance',{}).get('add') %}
+  <div class="mt-4"><button type="submit" class="btn btn-primary">Save Attendance</button></div>
+  {% endif %}
+</form>
+</div></div>
+{% endblock %}

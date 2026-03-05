@@ -1,0 +1,25 @@
+{% extends 'base.html' %}{% block title %}Patient Report{% endblock %}{% block page_title %}Patient Report{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Patient Report</h1></div><a href="{{ url_for('reports') }}" class="btn btn-secondary">← Back</a></div>
+<div class="card mb-4"><div class="card-header">
+  <form class="flex gap-2 items-center" method="GET">
+    <label class="form-label" style="margin:0;">From:</label><input type="date" name="start" class="form-control" value="{{ start }}" style="width:150px;">
+    <label class="form-label" style="margin:0;">To:</label><input type="date" name="end" class="form-control" value="{{ end }}" style="width:150px;">
+    <button type="submit" class="btn btn-primary">Generate</button>
+  </form>
+</div></div>
+<div class="stats-grid">
+  <div class="stat-card" style="--card-color:#2563eb;"><div class="stat-label">OPD Visits</div><div class="stat-value">{{ opd|length }}</div></div>
+  <div class="stat-card" style="--card-color:#8b5cf6;"><div class="stat-label">IPD Admissions</div><div class="stat-value">{{ ipd|length }}</div></div>
+</div>
+<div class="card"><div class="card-header"><h3>OPD Records ({{ opd|length }})</h3></div><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Patient</th><th>Gender</th><th>Date</th><th>Doctor</th><th>Charge</th><th>Payment</th></tr></thead>
+<tbody>{% for r in opd %}<tr><td>{{ r.patient_name }}</td><td>{{ r.gender or '—' }}</td><td>{{ r.date }}</td><td>{{ r.doctor_name or '—' }}</td>
+  <td>{{ r.charge }}</td><td>{% if r.payment_status=='paid' %}<span class="badge badge-success">Paid</span>{% else %}<span class="badge badge-danger">Unpaid</span>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="6" class="text-center text-muted" style="padding:1.5rem">No OPD records.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>
+<div class="card"><div class="card-header"><h3>IPD Records ({{ ipd|length }})</h3></div><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Patient</th><th>Gender</th><th>Admitted</th><th>Doctor</th><th>Bed</th><th>Status</th></tr></thead>
+<tbody>{% for r in ipd %}<tr><td>{{ r.patient_name }}</td><td>{{ r.gender or '—' }}</td><td>{{ r.date }}</td><td>{{ r.doctor_name or '—' }}</td><td>{{ r.bed_name or '—' }}</td>
+  <td>{% if r.discharged=='no' %}<span class="badge badge-warning">Admitted</span>{% else %}<span class="badge badge-secondary">Discharged</span>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="6" class="text-center text-muted" style="padding:1.5rem">No IPD records.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

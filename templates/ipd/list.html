@@ -1,0 +1,15 @@
+{% extends 'base.html' %}{% block title %}IPD{% endblock %}{% block page_title %}IPD Admissions{% endblock %}{% block content %}
+<div class="page-header"><div><h1>IPD Admissions</h1></div>{% if user_perms.get('ipd',{}).get('add') %}<a href="{{ url_for('ipd_add') }}" class="btn btn-primary">+ Admit Patient</a>{% endif %}</div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Patient</th><th>Doctor</th><th>Bed</th><th>Admitted</th><th>Status</th><th>Discharge Date</th><th>Actions</th></tr></thead>
+<tbody>{% for r in records %}<tr>
+  <td>{{ r.patient_name }}<br><small class="text-muted">{{ r.patient_unique_id }}</small></td>
+  <td>{{ r.doctor_name or "—" }}</td><td>{{ r.bed_name or "—" }}</td><td>{{ r.date }}</td>
+  <td>{% if r.discharged=='no' %}<span class="badge badge-warning">Admitted</span>{% else %}<span class="badge badge-secondary">Discharged</span>{% endif %}</td>
+  <td>{{ r.discharge_date or "—" }}</td>
+  <td>{% if r.discharged=='no' and user_perms.get('ipd',{}).get('edit') %}
+    <form method="POST" action="{{ url_for('ipd_discharge',iid=r.id) }}" style="display:inline" onsubmit="return confirm('Discharge patient?')">
+      <button class="btn btn-danger btn-xs">Discharge</button>
+    </form>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="7" class="text-center text-muted" style="padding:2rem">No IPD records.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

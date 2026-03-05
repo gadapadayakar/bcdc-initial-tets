@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% block title %}Training{% endblock %}{% block page_title %}Training & Certification{% endblock %}{% block content %}
+<div class="page-header"><div><h1>Training Programs</h1></div>{% if user_perms.get('hr_training',{}).get('add') %}<a href="{{ url_for('hr_training_add') }}" class="btn btn-primary">+ New Training</a>{% endif %}</div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Title</th><th>Category</th><th>Trainer</th><th>Start</th><th>End</th><th>Hours</th><th>Location</th><th>Enrolled</th><th>Actions</th></tr></thead>
+<tbody>{% for r in records %}<tr>
+  <td><strong>{{ r.title }}</strong></td><td><span class="badge badge-info">{{ r.category }}</span></td>
+  <td>{{ r.trainer or '—' }}</td><td>{{ r.start_date }}</td><td>{{ r.end_date }}</td>
+  <td>{{ r.duration_hours }}h</td><td>{{ r.location or '—' }}</td>
+  <td><span class="badge badge-purple">{{ r.enrolled_count }} staff</span></td>
+  <td><a href="{{ url_for('hr_training_view',tid=r.id) }}" class="btn btn-secondary btn-xs">View</a></td>
+</tr>{% else %}<tr><td colspan="9" class="text-center text-muted" style="padding:2rem">No training programs.</td></tr>{% endfor %}</tbody>
+</table></div></div></div>{% endblock %}

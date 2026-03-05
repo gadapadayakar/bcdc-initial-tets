@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Prescriptions{% endblock %}
+{% block page_title %}📋 Prescriptions{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Prescriptions</h1><div class="breadcrumb">Pharmacy / Prescriptions</div></div>
+  <div class="flex gap-2">
+    {% if perms.get('pharmacy_dispense',{}).get('add') %}
+    <a href="{{ url_for('pharmacy_dispense') }}" class="btn btn-success">💊 Dispense Medicines</a>
+    {% endif %}
+    {% if perms.get('prescriptions',{}).get('add') %}
+    <a href="{{ url_for('pharmacy_dispense') }}" class="btn btn-primary">+ Write Prescription</a>
+    {% endif %}
+  </div>
+</div>
+<div class="card">
+  <div class="card-body p-0">
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Rx#</th><th>Patient</th><th>Patient ID</th><th>Doctor</th>
+        <th>Date</th><th>Diagnosis</th><th>Status</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in records %}
+    <tr>
+      <td><strong>#{{ r.id }}</strong></td>
+      <td>{{ r.patient_name }}</td>
+      <td><span class="badge badge-info">{{ r.patient_unique_id }}</span></td>
+      <td>{{ r.doc or 'Self' }}</td>
+      <td>{{ r.prescribed_date }}</td>
+      <td>{{ (r.diagnosis or '—')[:40] }}</td>
+      <td>
+        {% if r.status == 'dispensed' %}
+          <span class="badge badge-success">✅ Dispensed</span>
+        {% elif r.status == 'pending' %}
+          <span class="badge badge-warning">⏳ Pending</span>
+        {% else %}
+          <span class="badge badge-secondary">{{ r.status }}</span>
+        {% endif %}
+      </td>
+      <td>
+        <div class="flex gap-1">
+          <a href="{{ url_for('pharmacy_dispense_all') }}" class="btn btn-info btn-xs">View</a>
+          {% if r.status == 'pending' and perms.get('pharmacy_dispense',{}).get('add') %}
+          <a href="{{ url_for('pharmacy_dispense') }}?rx={{ r.id }}" class="btn btn-success btn-xs">💊 Dispense</a>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" class="text-center text-muted" style="padding:2rem">No prescriptions found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  </div>
+</div>
+{% endblock %}

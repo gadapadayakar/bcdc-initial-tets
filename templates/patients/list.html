@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Patients{% endblock %}
+{% block page_title %}Patients{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Patient Records</h1><div class="breadcrumb">Home / Patients</div></div>
+  {% if user_perms.get('patients',{}).get('add') %}<a href="{{ url_for('patient_add') }}" class="btn btn-primary">+ Add Patient</a>{% endif %}
+</div>
+<div class="card">
+  <div class="card-header">
+    <h3>All Patients ({{ patients|length }})</h3>
+    <form class="flex gap-2" method="GET">
+      <input type="text" name="search" class="form-control" placeholder="Search name, ID, phone…" value="{{ search }}" style="width:260px;">
+      <button type="submit" class="btn btn-primary">Search</button>
+      {% if search %}<a href="{{ url_for('patients') }}" class="btn btn-secondary">Clear</a>{% endif %}
+    </form>
+  </div>
+  <div class="card-body p-0"><div class="table-wrap"><table>
+    <thead><tr><th>Patient ID</th><th>Name</th><th>Guardian</th><th>Gender</th><th>Age</th><th>Mobile</th><th>Blood</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>{% for p in patients %}<tr>
+      <td><a href="{{ url_for('patient_view',pid=p.id) }}" class="font-bold">{{ p.patient_unique_id }}</a></td>
+      <td>{{ p.patient_name }}</td><td>{{ p.guardian_name or "—" }}</td><td>{{ p.gender or "—" }}</td><td>{{ p.age or "—" }}</td><td>{{ p.mobileno or "—" }}</td>
+      <td>{% if p.blood_group %}<span class="badge badge-danger">{{ p.blood_group }}</span>{% else %}—{% endif %}</td>
+      <td><span class="badge badge-info">{{ p.patient_type|upper }}</span></td>
+      <td>{% if p.discharged=="no" %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-secondary">Discharged</span>{% endif %}</td>
+      <td>
+        <a href="{{ url_for('patient_view',pid=p.id) }}" class="btn btn-secondary btn-xs">View</a>
+        {% if user_perms.get('patients',{}).get('edit') %}<a href="{{ url_for('patient_edit',pid=p.id) }}" class="btn btn-warning btn-xs">Edit</a>{% endif %}
+        {% if user_perms.get('patients',{}).get('delete') %}<form method="POST" action="{{ url_for('patient_delete',pid=p.id) }}" style="display:inline" onsubmit="return confirm('Delete?')"><button class="btn btn-danger btn-xs">Del</button></form>{% endif %}
+      </td>
+    </tr>{% else %}<tr><td colspan="10" class="text-center text-muted" style="padding:2rem">No patients found.</td></tr>{% endfor %}</tbody>
+  </table></div></div>
+</div>
+{% endblock %}

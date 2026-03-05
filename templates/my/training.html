@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}My Training{% endblock %}
+{% block page_title %}My Training Records{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>🎓 My Training & Development</h1><div class="breadcrumb">My Portal / Training</div></div>
+  <a href="{{ url_for('my_portal') }}" class="btn btn-secondary">← My Portal</a>
+</div>
+<div class="card"><div class="card-body p-0"><div class="table-wrap"><table>
+<thead><tr><th>Program</th><th>Category</th><th>Trainer</th><th>Duration</th><th>Start Date</th><th>End Date</th><th>Status</th><th>Score</th><th>Certificate</th></tr></thead>
+<tbody>{% for r in records %}<tr>
+  <td><strong>{{ r.title }}</strong><br><small class="text-muted">{{ r.location }}</small></td>
+  <td><span class="badge badge-info">{{ r.category }}</span></td>
+  <td>{{ r.trainer }}</td>
+  <td>{{ r.duration_hours }}h</td>
+  <td>{{ r.start_date }}</td>
+  <td>{{ r.end_date }}</td>
+  <td>{% if r.enroll_status=='completed' %}<span class="badge badge-success">✅ Completed</span>
+  {% else %}<span class="badge badge-warning">📚 Enrolled</span>{% endif %}</td>
+  <td>{% if r.score %}<strong>{{ r.score }}/100</strong>{% else %}—{% endif %}</td>
+  <td>{% if r.certificate_issued %}<span class="badge badge-success">🎖 Issued</span>
+  {% else %}<span class="badge badge-secondary">—</span>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="9" class="text-center text-muted" style="padding:2rem;">
+  No training records found.<br><small>Contact HR to enroll in training programs.</small>
+</td></tr>{% endfor %}</tbody>
+</table></div></div></div>
+{% endblock %}
