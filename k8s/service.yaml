@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hms-svc
+  namespace: hms
+spec:
+  selector:
+    app: hms
+  ports:
+  - port: 80
+    targetPort: 8080
+    name: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hms-ingress
+  namespace: hms
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"      # allow file uploads
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"   # HMS reports take time
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: hms.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: hms-svc
+            port:
+              number: 80

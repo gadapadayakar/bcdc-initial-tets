@@ -1,34 +1,112 @@
-name: Deploy to Cloud Run
+name: HMS CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 env:
-  SERVICE_NAME: hms-v3
-  REGION: asia-south1
+  HARBOR_REGISTRY: harbor.local
+  HARBOR_PROJECT: myapp
+  IMAGE_NAME: hms
+  K8S_NAMESPACE: hms
 
 jobs:
-  deploy:
-    name: Build & Deploy
-    runs-on: ubuntu-latest
+  # ── JOB 1: BUILD & PUSH ──────────────────────────────────
+  build:
+    name: Build & Push to Harbor
+    runs-on: self-hosted        # ← runs on your K8s runner pod
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Auth to GCP
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Generate image tag
+        id: meta
+        run: |
+          # Tag = git short SHA (e.g. a3f9c21) — never use :latest in prod!
+          SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          echo "tag=${SHA}" >> $GITHUB_OUTPUT
+          echo "full_image=${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ env.IMAGE_NAME }}:${SHA}" >> $GITHUB_OUTPUT
+          echo "Image will be: ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ env.IMAGE_NAME }}:${SHA}"
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - name: Build Docker image
+        run: |
+          docker build \
+            --tag ${{ steps.meta.outputs.full_image }} \
+            --tag ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ env.IMAGE_NAME }}:latest \
+            --label "git-commit=${{ github.sha }}" \
+            --label "build-date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            .
 
-      
-      - name: Deploy to Cloud Run
-        run: gcloud run deploy ${{ env.SERVICE_NAME }} --source . --region ${{ env.REGION }} --allow-unauthenticated --port 8080 --memory 512Mi --set-env-vars "SECRET_KEY=${{ secrets.SECRET_KEY }},APP_ENV=production"
+      - name: Login to Harbor
+        run: |
+          echo "${{ secrets.HARBOR_PASSWORD }}" | \
+            docker login ${{ env.HARBOR_REGISTRY }} \
+            --username ${{ secrets.HARBOR_USERNAME }} \
+            --password-stdin
 
-      - name: Get Service URL
-        run: gcloud run services describe ${{ env.SERVICE_NAME }} --region ${{ env.REGION }} --format "value(status.url)"
+      - name: Push to Harbor
+        run: |
+          docker push ${{ steps.meta.outputs.full_image }}
+          docker push ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ env.IMAGE_NAME }}:latest
+          echo "✅ Pushed: ${{ steps.meta.outputs.full_image }}"
+
+      - name: Clean up local images
+        run: |
+          docker rmi ${{ steps.meta.outputs.full_image }} || true
+          docker rmi ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ env.IMAGE_NAME }}:latest || true
+
+  # ── JOB 2: DEPLOY ────────────────────────────────────────
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: self-hosted
+    needs: build             # only runs if build succeeds
+    if: github.ref == 'refs/heads/main'   # only deploy from main branch
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Update image tag in deployment
+        run: |
+          # Replace IMAGE_TAG placeholder with actual git SHA
+          sed -i "s|IMAGE_TAG|${{ needs.build.outputs.image_tag }}|g" \
+            k8s/deployment.yaml
+          echo "=== Updated deployment.yaml ==="
+          grep "image:" k8s/deployment.yaml
+
+      - name: Apply K8s manifests
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/pvc.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/ingress.yaml
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/hms \
+            -n ${{ env.K8S_NAMESPACE }} \
+            --timeout=300s
+
+      - name: Verify deployment
+        run: |
+          echo "=== PODS ==="
+          kubectl get pods -n ${{ env.K8S_NAMESPACE }}
+          echo "=== IMAGE DEPLOYED ==="
+          kubectl get deployment hms -n ${{ env.K8S_NAMESPACE }} \
+            -o jsonpath='{.spec.template.spec.containers[0].image}' && echo
+          echo "✅ HMS v${{ needs.build.outputs.image_tag }} deployed!"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed! Rolling back..."
+          kubectl rollout undo deployment/hms -n ${{ env.K8S_NAMESPACE }}
+          echo "⏪ Rolled back to previous version"
+          exit 1

@@ -1,0 +1,33 @@
+# NEVER commit these
+secrets.txt
+hms.db
+.env
+.env.*
+
+# Uploads (user data - use PVC in K8s)
+uploads/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+k8s/secret.yaml
+secrets.txt

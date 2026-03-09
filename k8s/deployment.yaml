@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hms
+  namespace: hms
+  labels:
+    app: hms
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hms
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # spin up 1 new pod before killing old
+      maxUnavailable: 0  # ZERO downtime — always keep 2 pods running
+  template:
+    metadata:
+      labels:
+        app: hms
+    spec:
+      containers:
+      - name: hms
+        # IMAGE_TAG is replaced by GitHub Actions with git SHA (e.g. a3f9c21)
+        image: harbor.local/myapp/hms:IMAGE_TAG
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+
+        # ── Environment from K8s Secret ──
+        env:
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: hms-secrets
+              key: SECRET_KEY
+        - name: APP_ENV
+          valueFrom:
+            secretKeyRef:
+              name: hms-secrets
+              key: APP_ENV
+        - name: DATABASE_PATH
+          value: "/app/data/hms.db"
+        - name: UPLOAD_FOLDER
+          value: "/app/uploads"
+
+        # ── Resource limits ──
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+        # ── Health checks ──
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
+
+        # ── Volume mounts ──
+        volumeMounts:
+        - name: hms-db
+          mountPath: /app/data        # hms.db lives here
+        - name: hms-uploads
+          mountPath: /app/uploads     # user uploads live here
+
+      # ── Volumes from PVCs ──
+      volumes:
+      - name: hms-db
+        persistentVolumeClaim:
+          claimName: hms-db-pvc
+      - name: hms-uploads
+        persistentVolumeClaim:
+          claimName: hms-uploads-pvc
+
+      # ── Image pull from Harbor ──
+      imagePullSecrets:
+      - name: harbor-pull-secret

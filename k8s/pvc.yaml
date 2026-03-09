@@ -1,0 +1,27 @@
+# PVC 1: SQLite database (hms.db)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hms-db-pvc
+  namespace: hms
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi
+---
+# PVC 2: User uploads (profile pictures, documents)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hms-uploads-pvc
+  namespace: hms
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
