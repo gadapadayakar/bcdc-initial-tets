@@ -1,4 +1,21 @@
-- name: Create Kaniko build pod
+name: HMS CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-push:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: tag
+        run: echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Create Kaniko build pod
         run: |
           IMAGE_TAG=${{ steps.tag.outputs.IMAGE_TAG }}
           cat > /tmp/kaniko-pod.yaml << ENDOFYAML
@@ -43,3 +60,30 @@
           ENDOFYAML
           sed -i 's/^          //' /tmp/kaniko-pod.yaml
           kubectl apply -f /tmp/kaniko-pod.yaml
+
+      - name: Wait for Kaniko to finish
+        run: |
+          kubectl wait --for=condition=Ready pod/kaniko-build-${{ github.run_number }} -n hms --timeout=30s || true
+          kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/kaniko-build-${{ github.run_number }} -n hms --timeout=300s
+          kubectl logs kaniko-build-${{ github.run_number }} -n hms
+          kubectl delete pod kaniko-build-${{ github.run_number }} -n hms
+
+  deploy:
+    runs-on: self-hosted
+    needs: build-and-push
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: tag
+        run: echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Deploy to K8s
+        run: |
+          sed -i "s|IMAGE_TAG|${{ steps.tag.outputs.IMAGE_TAG }}|g" k8s/deployment.yaml
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/pvc.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl rollout status deployment/hms -n hms --timeout=120s
