@@ -39,8 +39,8 @@ jobs:
               args:
               - "--context=/workspace"
               - "--dockerfile=/workspace/Dockerfile"
-              - "--destination=10.104.105.226:5000/myapp/hms:${IMAGE_TAG}"
-              - "--destination=10.104.105.226:5000/myapp/hms:latest"
+              - "--destination=10.105.137.160/myapp/hms:${IMAGE_TAG}"
+              - "--destination=10.105.137.160/myapp/hms:latest"
               - "--insecure"
               - "--skip-tls-verify"
               volumeMounts:
