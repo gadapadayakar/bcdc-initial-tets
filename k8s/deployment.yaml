@@ -24,8 +24,7 @@ spec:
     spec:
       containers:
       - name: hms
-        # IMAGE_TAG is replaced by GitHub Actions with git SHA (e.g. a3f9c21)
-        image: harbor.local/myapp/hms:IMAGE_TAG
+        image: 10.105.137.160/myapp/hms:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
