@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - name: hms
-        image: 10.105.137.160/myapp/hms:latest
+        image: 10.105.137.160/myapp/hms:9ae5865
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
