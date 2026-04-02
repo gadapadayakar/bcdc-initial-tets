@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build-and-push:
     runs-on: self-hosted
@@ -13,12 +17,10 @@ jobs:
 
       - name: Set image tag
         id: tag
-        shell: /usr/bin/bash
         run: |
           echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
 
       - name: Create Kaniko build pod
-        shell: /usr/bin/bash
         run: |
           IMAGE_TAG=${{ steps.tag.outputs.IMAGE_TAG }}
           cat > /tmp/kaniko-pod.yaml << EOF
@@ -65,7 +67,6 @@ jobs:
           kubectl apply -f /tmp/kaniko-pod.yaml --validate=false
 
       - name: Wait for Kaniko to finish
-        shell: /usr/bin/bash
         run: |
           kubectl wait --for=condition=Ready pod/kaniko-build-${{ github.run_number }} -n hms --timeout=30s || true
           kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/kaniko-build-${{ github.run_number }} -n hms --timeout=300s
@@ -81,12 +82,10 @@ jobs:
 
       - name: Set image tag
         id: tag
-        shell: /usr/bin/bash
         run: |
           echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
 
       - name: Deploy to K8s
-        shell: /usr/bin/bash
         run: |
           IMAGE_TAG=${{ steps.tag.outputs.IMAGE_TAG }}
           sed -i "s|IMAGE_TAG|${IMAGE_TAG}|g" k8s/deployment.yaml
