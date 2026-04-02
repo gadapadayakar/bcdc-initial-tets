@@ -15,22 +15,60 @@ jobs:
         id: tag
         shell: bash
         run: |
-          $tag = "${{ github.sha }}".Substring(0, 7)
-          "IMAGE_TAG=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
 
       - name: Create Kaniko build pod
         shell: bash
         run: |
-          $IMAGE_TAG = "${{ steps.tag.outputs.IMAGE_TAG }}"
-          $yamlContent = "apiVersion: v1`nkind: Pod`nmetadata:`n  name: kaniko-build-${{ github.run_number }}`n  namespace: hms`nspec:`n  restartPolicy: Never`n  initContainers:`n  - name: git-clone`n    image: alpine/git:latest`n    command: ['git', 'clone', 'https://github.com/gadapadayakar/bcdc-initial-tets.git', '/workspace']`n    volumeMounts:`n    - name: workspace`n      mountPath: /workspace`n  containers:`n  - name: kaniko`n    image: gcr.io/kaniko-project/executor:latest`n    args:`n    - '--context=/workspace'`n    - '--dockerfile=/workspace/Dockerfile'`n    - '--destination=10.105.137.160/myapp/hms:$IMAGE_TAG'`n    - '--destination=10.105.137.160/myapp/hms:latest'`n    - '--insecure'`n    - '--skip-tls-verify'`n    volumeMounts:`n    - name: workspace`n      mountPath: /workspace`n    - name: harbor-creds`n      mountPath: /kaniko/.docker`n  volumes:`n  - name: workspace`n    emptyDir: {}`n  - name: harbor-creds`n    secret:`n      secretName: harbor-kaniko-secret`n      items:`n      - key: .dockerconfigjson`n        path: config.json"
-          $yamlContent | Out-File -FilePath "$env:TEMP\kaniko-pod.yaml" -Encoding utf8
-          kubectl apply -f "$env:TEMP\kaniko-pod.yaml" --validate=false
+          IMAGE_TAG=${{ steps.tag.outputs.IMAGE_TAG }}
+          cat > /tmp/kaniko-pod.yaml << EOF
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: kaniko-build-${{ github.run_number }}
+            namespace: hms
+          spec:
+            restartPolicy: Never
+            initContainers:
+            - name: git-clone
+              image: alpine/git:latest
+              command: ["git", "clone", "https://github.com/gadapadayakar/bcdc-initial-tets.git", "/workspace"]
+              volumeMounts:
+              - name: workspace
+                mountPath: /workspace
+            containers:
+            - name: kaniko
+              image: gcr.io/kaniko-project/executor:latest
+              args:
+              - "--context=/workspace"
+              - "--dockerfile=/workspace/Dockerfile"
+              - "--destination=10.105.137.160/myapp/hms:${IMAGE_TAG}"
+              - "--destination=10.105.137.160/myapp/hms:latest"
+              - "--insecure"
+              - "--skip-tls-verify"
+              volumeMounts:
+              - name: workspace
+                mountPath: /workspace
+              - name: harbor-creds
+                mountPath: /kaniko/.docker
+            volumes:
+            - name: workspace
+              emptyDir: {}
+            - name: harbor-creds
+              secret:
+                secretName: harbor-kaniko-secret
+                items:
+                - key: .dockerconfigjson
+                  path: config.json
+          EOF
+          sed -i 's/^          //' /tmp/kaniko-pod.yaml
+          kubectl apply -f /tmp/kaniko-pod.yaml --validate=false
 
       - name: Wait for Kaniko to finish
         shell: bash
         run: |
-          kubectl wait --for=condition=Ready pod/kaniko-build-${{ github.run_number }} -n hms --timeout=30s
-          kubectl wait "--for=jsonpath={.status.phase}=Succeeded" pod/kaniko-build-${{ github.run_number }} -n hms --timeout=300s
+          kubectl wait --for=condition=Ready pod/kaniko-build-${{ github.run_number }} -n hms --timeout=30s || true
+          kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/kaniko-build-${{ github.run_number }} -n hms --timeout=300s
           kubectl logs kaniko-build-${{ github.run_number }} -n hms
           kubectl delete pod kaniko-build-${{ github.run_number }} -n hms
 
@@ -45,16 +83,15 @@ jobs:
         id: tag
         shell: bash
         run: |
-          $tag = "${{ github.sha }}".Substring(0, 7)
-          "IMAGE_TAG=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
 
       - name: Deploy to K8s
         shell: bash
         run: |
-          $IMAGE_TAG = "${{ steps.tag.outputs.IMAGE_TAG }}"
-          (Get-Content k8s\deployment.yaml) -replace 'IMAGE_TAG', $IMAGE_TAG | Set-Content k8s\deployment.yaml
-          kubectl apply -f k8s\namespace.yaml
-          kubectl apply -f k8s\pvc.yaml
-          kubectl apply -f k8s\deployment.yaml
-          kubectl apply -f k8s\service.yaml
+          IMAGE_TAG=${{ steps.tag.outputs.IMAGE_TAG }}
+          sed -i "s|IMAGE_TAG|${IMAGE_TAG}|g" k8s/deployment.yaml
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/pvc.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
           kubectl rollout status deployment/hms -n hms --timeout=120s
