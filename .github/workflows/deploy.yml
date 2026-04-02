@@ -13,6 +13,7 @@ jobs:
 
       - name: Set image tag
         id: tag
+        shell: bash
         run: echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
 
       - name: Create Kaniko build pod
@@ -77,6 +78,7 @@ jobs:
 
       - name: Set image tag
         id: tag
+        shell: bash
         run: echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
 
       - name: Deploy to K8s
